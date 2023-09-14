@@ -1,0 +1,78 @@
+//
+//  API.swift
+//  Bottle
+//
+//  Created by Cobalt on 9/8/23.
+//
+
+import Foundation
+
+struct AppState {
+    var metadata: AppMetadata?
+    var feeds = [Feed]()
+}
+
+func fetchMetadata() async throws -> AppMetadata {
+    let data = try await call(path: "/metadata")
+    return try decode(data)
+}
+
+func fetchFeeds(communityNames: [String]) async throws -> [Feed] {
+    return try await withThrowingTaskGroup(of: [Feed].self) { group -> [Feed] in
+        for name in communityNames {
+            group.addTask {
+                let data = try await call(path: "/\(name)/feeds")
+                return try decode(data)
+            }
+        }
+        return try await group.reduce(into: [Feed]()) { partial, feeds in
+            partial.append(contentsOf: feeds)
+        }
+    }
+}
+
+func fetchPosts(community: String, feedID: Int, page: Int = 0, pageSize: Int = 30) async throws -> Pagination<Post> {
+    let data = try await call(path: "/\(community)/feed/\(feedID)/posts?page=\(page)&page_size=\(pageSize)")
+    return try decode(data)
+}
+
+func addWork(community: String, postID: String, page: Int) async throws -> Work {
+    let data = try await call(.post, path: "/\(community)/post/\(postID)/work?page=\(page)")
+    return try decode(data)
+}
+
+func deleteWork(workID: Int) async throws {
+    _ = try await call(.delete, path: "/work/\(workID)")
+}
+
+// MARK: - Helper
+
+private let baseURL = "http://127.0.0.1:6000"
+
+private enum HTTPMethod: String {
+    case get = "GET"
+    case post = "POST"
+    case delete = "DELETE"
+}
+
+private func call(_ method: HTTPMethod = .get, path: String) async throws -> Data {
+    var request = URLRequest(url: URL(string: baseURL + path)!)
+    request.httpMethod = method.rawValue
+    let (data, response) = try await URLSession.shared.data(for: request)
+    guard let httpResponse = response as? HTTPURLResponse,
+          (200 ... 299).contains(httpResponse.statusCode)
+    else {
+        throw AppError.badStatus(code: (response as? HTTPURLResponse)?.statusCode,
+                                 content: String(data: data, encoding: .utf8))
+    }
+    return data
+}
+
+private func decode<T: Decodable>(_ data: Data) throws -> T {
+    let formatter = DateFormatter()
+    formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+    let decoder = JSONDecoder()
+    decoder.keyDecodingStrategy = .convertFromSnakeCase
+    decoder.dateDecodingStrategy = .formatted(formatter)
+    return try decoder.decode(T.self, from: data)
+}
