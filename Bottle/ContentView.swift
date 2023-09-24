@@ -9,7 +9,7 @@ import SwiftUI
 
 struct ContentView: View {
     let feeds: [Feed]
-    
+
     private var communityFeeds: [(String, [Feed])] {
         var result = [(String, [Feed])]()
         for feed in feeds {
@@ -25,26 +25,41 @@ struct ContentView: View {
 
     var body: some View {
         NavigationSplitView {
-            List(communityFeeds, id: \.0) { community, feeds in
-                Section(community) {
-                    ForEach(feeds) { feed in
-                        NavigationLink {
-                            FeedView(feed: feed)
+            List {
+                Section("Bottle") {
+                    NavigationLink {
+                        LibraryView()
+                    } label: {
+                        Label("Library", systemImage: "photo.on.rectangle")
+                    }
+                }
+
+                Section("Feeds") {
+                    ForEach(communityFeeds, id: \.0) { community, feeds in
+                        DisclosureGroup(isExpanded: .initial(true)) {
+                            ForEach(feeds) { feed in
+                                NavigationLink {
+                                    FeedView(feed: feed)
+                                } label: {
+                                    Label(feed.name.capitalized, systemImage: "doc.text.image")
+                                        .foregroundColor(.primary)
+                                }
+                            }
                         } label: {
-                            Label(feed.name, systemImage: "doc.text.image")
+                            Label(community.capitalized, systemImage: "person.2")
+                                .foregroundColor(.primary)
                         }
                     }
                 }
             }
-            .navigationTitle("Feeds")
         } detail: {
             Text("Select a feed")
         }
     }
 }
 
-// struct ContentView_Previews: PreviewProvider {
-//     static var previews: some View {
-//         ContentView()
-//     }
-// }
+struct ContentView_Previews: PreviewProvider {
+    static var previews: some View {
+        ContentView(feeds: [])
+    }
+}

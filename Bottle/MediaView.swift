@@ -21,7 +21,7 @@ struct MediaView: View {
             if let image = state.image {
                 image.resizable().scaledToFit()
             } else if state.error != nil {
-                Color.secondary.overlay(Image(systemName: "photo"))
+                Color.secondary.overlay { Image(systemName: "photo") }
             } else {
                 Color.secondary
             }
@@ -29,40 +29,51 @@ struct MediaView: View {
         .aspectRatio(CGSize(width: media.width, height: media.height), contentMode: .fit)
         .cornerRadius(20)
         .shadow(radius: hovering ? 10 : 5)
-        .animation(.default, value: hovering)
         .sheet(isPresented: $presentingModal) {
-            ImageSheet(media: media, presentingModal: $presentingModal)
+            ImageSheet(media: media, postID: postID, page: page, presentingModal: $presentingModal)
         }
         .overlay(alignment: .topTrailing) {
             ImportButton(media: media, postID: postID, page: page, selected: $hovering)
         }
         .onTapGesture { presentingModal = true }
         .onHover { hovering = $0 }
+        .animation(.default, value: hovering)
     }
 }
 
 private struct ImageSheet: View {
     let media: Media
+    let postID: String
+    let page: Int
     @Binding var presentingModal: Bool
 
-    private let defaultLength: CGFloat = 800
+    @State private var hovering = false
 
     var body: some View {
         LazyImage(request: media.urlRequest) { state in
             if let image = state.image {
                 image.resizable().scaledToFit()
             } else if state.error != nil {
-                Color.secondary.overlay(Image(systemName: "photo"))
+                Color.clear.overlay(Image(systemName: "photo"))
             } else {
-                Color.secondary.overlay(ProgressView())
+                Color.clear.overlay(ProgressView())
             }
+        }
+        .contentShape(Rectangle())
+        .overlay(alignment: .topTrailing) {
+            ImportButton(media: media, postID: postID, page: page, selected: $hovering)
         }
         .frame(minWidth: modalWidth, minHeight: modalHeight)
         .onTapGesture { presentingModal = false }
+        .onHover { hovering = $0 }
+        .animation(.default, value: hovering)
     }
 
-    private var modalWidth: CGFloat { defaultLength * sqrt(CGFloat(media.width) / CGFloat(media.height)) }
-    private var modalHeight: CGFloat { defaultLength * sqrt(CGFloat(media.height) / CGFloat(media.width)) }
+    private var mediaRatio: CGFloat { CGFloat(media.width) / CGFloat(media.height) }
+    private var maxWidth: CGFloat { Legacy.screenWidth ?? 800 }
+    private var maxHeight: CGFloat { (Legacy.screenHeight ?? 600) * 0.95 }
+    private var modalWidth: CGFloat { mediaRatio > Legacy.screenRatio ? maxWidth : maxHeight * mediaRatio }
+    private var modalHeight: CGFloat { mediaRatio > Legacy.screenRatio ? maxWidth / mediaRatio : maxHeight }
 }
 
 private struct ImportButton: View {
@@ -131,12 +142,16 @@ private struct ImportButton: View {
     }
 }
 
-// struct ImageView_Previews: PreviewProvider {
-//     static let example = Media(mediaId: "", community: "", url: "https://pbs.twimg.com/media/F2NVpflbwAEU8lB.jpg?name=orig", width: 2711, height: 1500, thumbnailUrl:  "https://pbs.twimg.com/media/F2NVpflbwAEU8lB.jpg?name=small", work: nil)
-//
-//     static var previews: some View {
-//         MediaView(media: example, postID: )
-//         ImageSheet(media: example, presentingModal: .constant(true))
-//         ImportButton(media: example, selected: .constant(true))
-//     }
-// }
+struct ImageView_Previews: PreviewProvider {
+    static let example = Media(mediaId: "", community: "",
+                               url: "https://pbs.twimg.com/media/F2NVpflbwAEU8lB.jpg?name=orig", width: 2711, height: 1500,
+                               thumbnailUrl: "https://pbs.twimg.com/media/F2NVpflbwAEU8lB.jpg?name=small", work: nil)
+    static let postID = "1685284918182682624"
+    static let page = 0
+
+    static var previews: some View {
+        MediaView(media: example, postID: postID, page: page)
+        ImageSheet(media: example, postID: postID, page: page, presentingModal: .constant(true))
+        ImportButton(media: example, postID: postID, page: page, selected: .constant(true))
+    }
+}

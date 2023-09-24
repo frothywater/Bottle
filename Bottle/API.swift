@@ -31,8 +31,13 @@ func fetchFeeds(communityNames: [String]) async throws -> [Feed] {
     }
 }
 
-func fetchPosts(community: String, feedID: Int, page: Int = 0, pageSize: Int = 30) async throws -> Pagination<Post> {
-    let data = try await call(path: "/\(community)/feed/\(feedID)/posts?page=\(page)&page_size=\(pageSize)")
+func fetchPosts(community: String, feedID: Int, page: Int = 0) async throws -> Pagination<Post> {
+    let data = try await call(path: "/\(community)/feed/\(feedID)/posts?page=\(page)")
+    return try decode(data)
+}
+
+func fetchWorks(page: Int = 0) async throws -> Pagination<Work> {
+    let data = try await call(path: "/works?page=\(page)")
     return try decode(data)
 }
 
@@ -47,7 +52,7 @@ func deleteWork(workID: Int) async throws {
 
 // MARK: - Helper
 
-private let baseURL = "http://127.0.0.1:6000"
+let baseURL = "http://127.0.0.1:6000"
 
 private enum HTTPMethod: String {
     case get = "GET"

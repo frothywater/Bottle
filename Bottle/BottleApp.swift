@@ -28,5 +28,6 @@ struct BottleApp: App {
                     }
                 }
         }
+        .windowToolbarStyle(.unifiedCompact)
     }
 }
