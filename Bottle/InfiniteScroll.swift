@@ -7,70 +7,80 @@
 
 import SwiftUI
 
-struct InfiniteScroll: View {
-    @State var items = [Int]()
-    @State var page = 0
-    @State var totalPages: Int?
-    @State var totalPosts: Int?
-    @State var loading = false
+struct InfiniteScroll<Item: Identifiable, Content: View, LoadResult: Paginated, ID: Equatable>: View
+    where LoadResult.Item == Item
+{
+    let id: ID
+    let loadAction: (_ page: Int) async throws -> LoadResult
+    let onChanged: (_ loading: Bool, _ page: Int, _ totalPages: Int?, _ totalItems: Int?) -> Void
+    @ViewBuilder let content: (_ item: Item) -> Content
 
-    private let columns = [GridItem(.adaptive(minimum: 100, maximum: 200))]
+    init(id: ID, _ content: @escaping (_ item: Item) -> Content,
+         loadAction: @escaping (_ page: Int) async throws -> LoadResult,
+         onChanged: @escaping (_ loading: Bool, _ page: Int, _ totalPages: Int?, _ totalItems: Int?) -> Void = { _, _, _, _ in })
+    {
+        self.id = id
+        self.loadAction = loadAction
+        self.onChanged = onChanged
+        self.content = content
+    }
+
+    @State private var items = [Item]()
+    @State private var page = 0
+    @State private var totalPages: Int?
+    @State private var totalItems: Int?
+    @State private var loading = false
 
     var body: some View {
-        VStack {
-            HStack {
-                Text("\(page)/\(totalPages ?? 0) page" + (loading ? " loading..." : ""))
-                Button("Reset") {
-                    items.removeAll()
-                    page = 0
-                    totalPages = nil
-                    totalPosts = nil
-                    loading = false
-                    Task { await load() }
-                }
-            }
-            ScrollView {
-                VStack {
-                    LazyVGrid(columns: columns) {
-                        ForEach(items, id: \.self) { item in
-                            Text(String(item))
-                                .font(.system(size: 48, weight: .heavy))
-                                .task {
-                                    if items.index(after: item) == items.endIndex {
-                                        await load()
-                                    }
-                                }
-                                .frame(height: 100)
+        if startedLoading {
+            ForEach(Array(zip(items, items.indices)), id: \.0.id) { item, index in
+                content(item)
+                    .task {
+                        if index == items.count - 1 {
+                            await load()
                         }
                     }
-                    if loading {
-                        ProgressView()
-                    }
-                }
             }
+        } else {
+            Color.clear
+                .task(id: id) {
+                    reset()
+                    await load()
+                }
         }
-        .frame(width: 600, height: 300)
-        .task { await load() }
+    }
+
+    private var startedLoading: Bool { totalPages != nil }
+
+    private var finishedLoading: Bool {
+        if let totalPages = totalPages, page == totalPages { return true }
+        return false
+    }
+
+    private func reset() {
+        items.removeAll()
+        page = 0
+        totalPages = nil
+        totalItems = nil
+        loading = false
     }
 
     private func load() async {
+        if finishedLoading { return }
+        defer { loading = false }
         do {
-            if let totalPages = totalPages, page == totalPages { return }
             loading = true
+            onChanged(loading, page, totalPages, totalItems)
 
-            try await Task.sleep(for: .seconds(1))
+            let result = try await loadAction(page)
 
-            items.append(contentsOf: (page * 10 + 1) ... (page * 10 + 10))
+            items.append(contentsOf: result.items)
             page += 1
-            totalPages = 10
-            totalPosts = 200
-            loading = false
-        } catch {}
-    }
-}
-
-struct InfiniteScroll_Previews: PreviewProvider {
-    static var previews: some View {
-        InfiniteScroll()
+            totalPages = result.totalPages
+            totalItems = result.totalItems
+            onChanged(loading, page, totalPages, totalItems)
+        } catch {
+            print(error)
+        }
     }
 }

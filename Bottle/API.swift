@@ -50,6 +50,16 @@ func deleteWork(workID: Int) async throws {
     _ = try await call(.delete, path: "/work/\(workID)")
 }
 
+func fetchUsers(community: String, feedID: Int, page: Int = 0) async throws -> Pagination<UserWithRecent> {
+    let data = try await call(path: "/\(community)/feed/\(feedID)/users?page=\(page)")
+    return try decode(data)
+}
+
+func fetchUserPosts(community: String, feedID: Int, userID: Int, page: Int = 0) async throws -> UserPostPagination {
+    let data = try await call(path: "/\(community)/feed/\(feedID)/user/\(userID)?page=\(page)")
+    return try decode(data)
+}
+
 // MARK: - Helper
 
 let baseURL = "http://127.0.0.1:6000"

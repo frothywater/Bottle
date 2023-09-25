@@ -27,6 +27,9 @@
 		51C363462AC078DF00065E53 /* LibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51C363452AC078DF00065E53 /* LibraryView.swift */; };
 		51C363482AC0908800065E53 /* Util.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51C363472AC0908800065E53 /* Util.swift */; };
 		51CC71192AB1B23E00A85047 /* MediaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51CC71182AB1B23E00A85047 /* MediaView.swift */; };
+		51EADE702AC11E950019A6CE /* Sidebar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51EADE6F2AC11E950019A6CE /* Sidebar.swift */; };
+		51EADE722AC1241C0019A6CE /* FeedUsersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51EADE712AC1241C0019A6CE /* FeedUsersView.swift */; };
+		51EADE742AC134840019A6CE /* StatusBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51EADE732AC134840019A6CE /* StatusBar.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -67,6 +70,9 @@
 		51C363452AC078DF00065E53 /* LibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryView.swift; sourceTree = "<group>"; };
 		51C363472AC0908800065E53 /* Util.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Util.swift; sourceTree = "<group>"; };
 		51CC71182AB1B23E00A85047 /* MediaView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaView.swift; sourceTree = "<group>"; };
+		51EADE6F2AC11E950019A6CE /* Sidebar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sidebar.swift; sourceTree = "<group>"; };
+		51EADE712AC1241C0019A6CE /* FeedUsersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedUsersView.swift; sourceTree = "<group>"; };
+		51EADE732AC134840019A6CE /* StatusBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBar.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -135,6 +141,9 @@
 				51297BD82ABE081D0007340C /* Legacy.swift */,
 				51C363452AC078DF00065E53 /* LibraryView.swift */,
 				51C363472AC0908800065E53 /* Util.swift */,
+				51EADE6F2AC11E950019A6CE /* Sidebar.swift */,
+				51EADE712AC1241C0019A6CE /* FeedUsersView.swift */,
+				51EADE732AC134840019A6CE /* StatusBar.swift */,
 			);
 			path = Bottle;
 			sourceTree = "<group>";
@@ -308,11 +317,14 @@
 				51352AF32AAEBD73000785F7 /* InfiniteScroll.swift in Sources */,
 				514D08FE2AAC3E270084C4BD /* FeedView.swift in Sources */,
 				516D1AFB2AAACB1A00C90060 /* ContentView.swift in Sources */,
+				51EADE722AC1241C0019A6CE /* FeedUsersView.swift in Sources */,
 				515A6EFF2AAB180200AA1D43 /* Response.swift in Sources */,
+				51EADE742AC134840019A6CE /* StatusBar.swift in Sources */,
 				51297BD92ABE081D0007340C /* Legacy.swift in Sources */,
 				515A6F012AAB1ED000AA1D43 /* API.swift in Sources */,
 				515A6F032AAB4C8300AA1D43 /* Error.swift in Sources */,
 				51C363462AC078DF00065E53 /* LibraryView.swift in Sources */,
+				51EADE702AC11E950019A6CE /* Sidebar.swift in Sources */,
 				516D1AF92AAACB1A00C90060 /* BottleApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

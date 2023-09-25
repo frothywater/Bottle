@@ -9,11 +9,8 @@ import NukeUI
 import SwiftUI
 
 struct LibraryView: View {
-    @State private var images = [LocalImage]()
-    @State private var page = 0
-    @State private var totalPages: Int?
-    @State private var totalItems: Int?
     @State private var loading = false
+    @State private var statusMessage = ""
     @State private var columnCount = 3.0
 
     private var columns: [GridItem] { Array(repeating: GridItem(.flexible()), count: lround(columnCount)) }
@@ -22,13 +19,16 @@ struct LibraryView: View {
         ScrollView {
             VStack {
                 LazyVGrid(columns: columns, spacing: 15) {
-                    ForEach(Array(zip(images, images.indices)), id: \.0.id) { image, index in
+                    InfiniteScroll(id: "library") { image in
                         ImageView(image: image)
-                            .task {
-                                if index == images.count - 1 {
-                                    await load()
-                                }
-                            }
+                    } loadAction: { page -> Pagination<LocalImage> in
+                        let result = try await fetchWorks(page: page)
+                        return result.asLocalImage
+                    } onChanged: { loading, page, totalPages, totalItems in
+                        self.loading = loading
+                        if let totalPages = totalPages, let totalItems = totalItems {
+                            statusMessage = "\(page)/\(totalPages) pages, \(totalItems) works in total"
+                        }
                     }
                 }
                 if loading {
@@ -36,58 +36,18 @@ struct LibraryView: View {
                 }
             }
             .padding()
-            .task {
-                if images.isEmpty {
-                    await load()
-                }
-            }
         }
         .overlay(alignment: .bottom) {
-            if let totalPages = totalPages, let totalItems = totalItems {
-                ZStack {
-                    Text("\(page)/\(totalPages) pages, \(totalItems) works in total")
-                        .font(.caption).foregroundColor(.secondary)
-                    Slider(value: $columnCount, in: 1 ... 10, step: 1)
-                        .controlSize(.small)
-                        .frame(width: 120)
-                        .frame(maxWidth: .infinity, alignment: .trailing)
-                }
-                .padding([.top, .bottom], 5)
-                .padding([.leading, .trailing], 15)
-                .background { Rectangle().fill(.thickMaterial) }
-                .overlay(alignment: .top) { Divider() }
-            }
-        }
-    }
-
-    private var finishedLoading: Bool {
-        if let totalPages = totalPages, page == totalPages { return true }
-        return false
-    }
-
-    private func load() async {
-        if finishedLoading { return }
-        defer { loading = false }
-        do {
-            loading = true
-            let result = try await fetchWorks(page: page)
-            let images = result.items.flatMap { work in work.images.compactMap(\.localImage) }
-
-            self.images.append(contentsOf: images)
-            page += 1
-            totalPages = result.totalPages
-            totalItems = result.totalItems
-        } catch {
-            print(error)
+            StatusBar(message: statusMessage, columnCount: $columnCount)
         }
     }
 }
 
-private struct LocalImage {
+private struct LocalImage: Decodable, Identifiable {
     let id: Int
     let width: Int
     let height: Int
-    
+
     var url: URL? {
         URL(string: baseURL + "/image/\(id)")
     }
@@ -97,6 +57,14 @@ private extension LibraryImage {
     var localImage: LocalImage? {
         guard let width = width, let height = height else { return nil }
         return LocalImage(id: id, width: width, height: height)
+    }
+}
+
+private extension Pagination<Work> {
+    var asLocalImage: Pagination<LocalImage> {
+        Pagination<LocalImage>(
+            items: items.flatMap { work in work.images.compactMap(\.localImage) },
+            page: page, pageSize: pageSize, totalItems: totalItems, totalPages: totalPages)
     }
 }
 

@@ -9,15 +9,13 @@ import NukeUI
 import SwiftUI
 
 struct MediaView: View {
-    let media: Media
-    let postID: String
-    let page: Int
+    let media: PostMedia
 
     @State private var presentingModal = false
     @State private var hovering = false
 
     var body: some View {
-        LazyImage(request: media.thumbnailRequest) { state in
+        LazyImage(request: media.inner.thumbnailRequest) { state in
             if let image = state.image {
                 image.resizable().scaledToFit()
             } else if state.error != nil {
@@ -26,14 +24,14 @@ struct MediaView: View {
                 Color.secondary
             }
         }
-        .aspectRatio(CGSize(width: media.width, height: media.height), contentMode: .fit)
+        .aspectRatio(CGSize(width: media.inner.width, height: media.inner.height), contentMode: .fit)
         .cornerRadius(20)
         .shadow(radius: hovering ? 10 : 5)
         .sheet(isPresented: $presentingModal) {
-            ImageSheet(media: media, postID: postID, page: page, presentingModal: $presentingModal)
+            ImageSheet(media: media, presentingModal: $presentingModal)
         }
         .overlay(alignment: .topTrailing) {
-            ImportButton(media: media, postID: postID, page: page, selected: $hovering)
+            ImportButton(media: media, selected: $hovering)
         }
         .onTapGesture { presentingModal = true }
         .onHover { hovering = $0 }
@@ -42,15 +40,13 @@ struct MediaView: View {
 }
 
 private struct ImageSheet: View {
-    let media: Media
-    let postID: String
-    let page: Int
+    let media: PostMedia
     @Binding var presentingModal: Bool
 
     @State private var hovering = false
 
     var body: some View {
-        LazyImage(request: media.urlRequest) { state in
+        LazyImage(request: media.inner.urlRequest) { state in
             if let image = state.image {
                 image.resizable().scaledToFit()
             } else if state.error != nil {
@@ -61,7 +57,7 @@ private struct ImageSheet: View {
         }
         .contentShape(Rectangle())
         .overlay(alignment: .topTrailing) {
-            ImportButton(media: media, postID: postID, page: page, selected: $hovering)
+            ImportButton(media: media, selected: $hovering)
         }
         .frame(minWidth: modalWidth, minHeight: modalHeight)
         .onTapGesture { presentingModal = false }
@@ -69,7 +65,7 @@ private struct ImageSheet: View {
         .animation(.default, value: hovering)
     }
 
-    private var mediaRatio: CGFloat { CGFloat(media.width) / CGFloat(media.height) }
+    private var mediaRatio: CGFloat { CGFloat(media.inner.width) / CGFloat(media.inner.height) }
     private var maxWidth: CGFloat { Legacy.screenWidth ?? 800 }
     private var maxHeight: CGFloat { (Legacy.screenHeight ?? 600) * 0.95 }
     private var modalWidth: CGFloat { mediaRatio > Legacy.screenRatio ? maxWidth : maxHeight * mediaRatio }
@@ -77,21 +73,17 @@ private struct ImageSheet: View {
 }
 
 private struct ImportButton: View {
-    let media: Media
-    let postID: String
-    let page: Int
+    let media: PostMedia
     @Binding var selected: Bool
 
     @State var hovering = false
     @State var operating = false
     @State var work: Work?
 
-    init(media: Media, postID: String, page: Int, selected: Binding<Bool>) {
+    init(media: PostMedia, selected: Binding<Bool>) {
         self.media = media
-        self.postID = postID
-        self.page = page
         _selected = selected
-        _work = State(initialValue: media.work)
+        _work = State(initialValue: media.inner.work)
     }
 
     var body: some View {
@@ -133,7 +125,7 @@ private struct ImportButton: View {
                     try await deleteWork(workID: workID)
                     work = nil
                 } else {
-                    work = try await addWork(community: media.community, postID: postID, page: page)
+                    work = try await addWork(community: media.inner.community, postID: media.postID, page: media.index)
                 }
             } catch {
                 print(error)
@@ -143,15 +135,16 @@ private struct ImportButton: View {
 }
 
 struct ImageView_Previews: PreviewProvider {
-    static let example = Media(mediaId: "", community: "",
-                               url: "https://pbs.twimg.com/media/F2NVpflbwAEU8lB.jpg?name=orig", width: 2711, height: 1500,
-                               thumbnailUrl: "https://pbs.twimg.com/media/F2NVpflbwAEU8lB.jpg?name=small", work: nil)
-    static let postID = "1685284918182682624"
-    static let page = 0
+    static let example = PostMedia(
+        inner: Media(mediaId: "", community: "",
+                     url: "https://pbs.twimg.com/media/F2NVpflbwAEU8lB.jpg?name=orig",
+                     width: 2711, height: 1500,
+                     thumbnailUrl: "https://pbs.twimg.com/media/F2NVpflbwAEU8lB.jpg?name=small", work: nil),
+        postID: "1685284918182682624", index: 0)
 
     static var previews: some View {
-        MediaView(media: example, postID: postID, page: page)
-        ImageSheet(media: example, postID: postID, page: page, presentingModal: .constant(true))
-        ImportButton(media: example, postID: postID, page: page, selected: .constant(true))
+        MediaView(media: example)
+        ImageSheet(media: example, presentingModal: .constant(true))
+        ImportButton(media: example, selected: .constant(true))
     }
 }

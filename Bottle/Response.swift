@@ -198,6 +198,22 @@ extension Post: Identifiable {
     }
 }
 
+struct PostMedia: Decodable, Identifiable {
+    let inner: Media
+    let postID: String
+    let index: Int
+    
+    var id: String {
+        "\(inner.id):\(index)"
+    }
+}
+
+extension Post {
+    var postMedia: [PostMedia] {
+        media.enumerated().map { index, media in PostMedia(inner: media, postID: postId, index: index) }
+    }
+}
+
 extension User: Identifiable {
     var id: String {
         community + userId
@@ -221,7 +237,7 @@ extension Media {
             return ImageRequest(url: url)
         }
     }
-    
+
     var urlRequest: ImageRequest? {
         guard let url = URL(string: url) else { return nil }
         if self.url.contains("pximg.net") {
@@ -231,5 +247,26 @@ extension Media {
         } else {
             return ImageRequest(url: url)
         }
+    }
+}
+
+protocol Paginated {
+    associatedtype Item
+    var items: [Item] { get }
+    var page: Int { get }
+    var pageSize: Int { get }
+    var totalItems: Int { get }
+    var totalPages: Int { get }
+}
+
+extension Pagination: Paginated {}
+
+extension UserPostPagination: Paginated {}
+
+extension Pagination<Post> {
+    var asPostMedia: Pagination<PostMedia> {
+        Pagination<PostMedia>(
+            items: items.flatMap { post in post.postMedia },
+            page: page, pageSize: pageSize, totalItems: totalItems, totalPages: totalPages)
     }
 }
