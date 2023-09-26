@@ -55,7 +55,7 @@ func fetchUsers(community: String, feedID: Int, page: Int = 0) async throws -> P
     return try decode(data)
 }
 
-func fetchUserPosts(community: String, feedID: Int, userID: Int, page: Int = 0) async throws -> UserPostPagination {
+func fetchUserPosts(community: String, feedID: Int, userID: String, page: Int = 0) async throws -> UserPostPagination {
     let data = try await call(path: "/\(community)/feed/\(feedID)/user/\(userID)?page=\(page)")
     return try decode(data)
 }

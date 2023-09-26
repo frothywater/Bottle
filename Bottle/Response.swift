@@ -146,7 +146,7 @@ struct LibraryImage: Decodable {
 
 struct UserWithRecent: Decodable {
     let user: User
-    let post: [Post]
+    let posts: [Post]
     let totalPosts: Int
 }
 
@@ -202,7 +202,7 @@ struct PostMedia: Decodable, Identifiable {
     let inner: Media
     let postID: String
     let index: Int
-    
+
     var id: String {
         "\(inner.id):\(index)"
     }
@@ -250,6 +250,10 @@ extension Media {
     }
 }
 
+extension UserWithRecent: Identifiable {
+    var id: String { user.id }
+}
+
 protocol Paginated {
     associatedtype Item
     var items: [Item] { get }
@@ -263,7 +267,7 @@ extension Pagination: Paginated {}
 
 extension UserPostPagination: Paginated {}
 
-extension Pagination<Post> {
+extension Paginated where Item == Post {
     var asPostMedia: Pagination<PostMedia> {
         Pagination<PostMedia>(
             items: items.flatMap { post in post.postMedia },

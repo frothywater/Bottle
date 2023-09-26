@@ -11,15 +11,26 @@ struct StatusBar: View {
     let message: String
     @Binding var columnCount: Double
     
+    private let hasSlider: Bool
+    
+    init(message: String, columnCount: Binding<Double>? = nil) {
+        self.message = message
+        _columnCount = columnCount ?? .constant(0)
+        hasSlider = columnCount != nil
+    }
+    
     var body: some View {
-        ZStack {
+        Group {
             Text(message)
                 .font(.caption).foregroundColor(.secondary)
-            Slider(value: $columnCount, in: 1 ... 10, step: 1)
-                .controlSize(.small)
-                .frame(width: 120)
-                .frame(maxWidth: .infinity, alignment: .trailing)
+            if hasSlider {
+                Slider(value: $columnCount, in: 1 ... 10, step: 1)
+                    .controlSize(.small)
+                    .frame(width: 120)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+            }
         }
+        .frame(maxWidth: .infinity)
         .padding([.top, .bottom], 5)
         .padding([.leading, .trailing], 15)
         .background { Rectangle().fill(.thickMaterial) }

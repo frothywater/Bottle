@@ -12,12 +12,12 @@ struct InfiniteScroll<Item: Identifiable, Content: View, LoadResult: Paginated, 
 {
     let id: ID
     let loadAction: (_ page: Int) async throws -> LoadResult
-    let onChanged: (_ loading: Bool, _ page: Int, _ totalPages: Int?, _ totalItems: Int?) -> Void
+    let onChanged: (_ loading: Bool, _ items: [Item], _ page: Int, _ totalPages: Int?, _ totalItems: Int?) -> Void
     @ViewBuilder let content: (_ item: Item) -> Content
 
     init(id: ID, _ content: @escaping (_ item: Item) -> Content,
          loadAction: @escaping (_ page: Int) async throws -> LoadResult,
-         onChanged: @escaping (_ loading: Bool, _ page: Int, _ totalPages: Int?, _ totalItems: Int?) -> Void = { _, _, _, _ in })
+         onChanged: @escaping (_ loading: Bool, _ items: [Item], _ page: Int, _ totalPages: Int?, _ totalItems: Int?) -> Void = { _, _, _, _, _ in })
     {
         self.id = id
         self.loadAction = loadAction
@@ -32,22 +32,19 @@ struct InfiniteScroll<Item: Identifiable, Content: View, LoadResult: Paginated, 
     @State private var loading = false
 
     var body: some View {
-        if startedLoading {
-            ForEach(Array(zip(items, items.indices)), id: \.0.id) { item, index in
-                content(item)
-                    .task {
-                        if index == items.count - 1 {
-                            await load()
+        Group {
+            if startedLoading {
+                ForEach(Array(zip(items, items.indices)), id: \.0.id) { item, index in
+                    content(item)
+                        .task {
+                            if index == items.count - 1 { await load() }
                         }
-                    }
-            }
-        } else {
-            Color.clear
-                .task(id: id) {
-                    reset()
-                    await load()
                 }
+            } else {
+                Color.clear.task(id: id) { await load() }
+            }
         }
+        .onChange(of: self.id) { _ in reset() }
     }
 
     private var startedLoading: Bool { totalPages != nil }
@@ -67,10 +64,13 @@ struct InfiniteScroll<Item: Identifiable, Content: View, LoadResult: Paginated, 
 
     private func load() async {
         if finishedLoading { return }
-        defer { loading = false }
+        defer {
+            loading = false
+            onChanged(loading, items, page, totalPages, totalItems)
+        }
         do {
             loading = true
-            onChanged(loading, page, totalPages, totalItems)
+            onChanged(loading, items, page, totalPages, totalItems)
 
             let result = try await loadAction(page)
 
@@ -78,7 +78,6 @@ struct InfiniteScroll<Item: Identifiable, Content: View, LoadResult: Paginated, 
             page += 1
             totalPages = result.totalPages
             totalItems = result.totalItems
-            onChanged(loading, page, totalPages, totalItems)
         } catch {
             print(error)
         }

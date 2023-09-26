@@ -19,14 +19,15 @@ struct MediaView: View {
             if let image = state.image {
                 image.resizable().scaledToFit()
             } else if state.error != nil {
-                Color.secondary.overlay { Image(systemName: "photo") }
+                Color.clear.overlay { Image(systemName: "photo") }
             } else {
-                Color.secondary
+                Color.clear
             }
         }
         .aspectRatio(CGSize(width: media.inner.width, height: media.inner.height), contentMode: .fit)
-        .cornerRadius(20)
-        .shadow(radius: hovering ? 10 : 5)
+        .contentShape(Rectangle())
+        .cornerRadius(10)
+        .overlay { RoundedRectangle(cornerRadius: 10).stroke(.separator) }
         .sheet(isPresented: $presentingModal) {
             ImageSheet(media: media, presentingModal: $presentingModal)
         }
@@ -50,16 +51,16 @@ private struct ImageSheet: View {
             if let image = state.image {
                 image.resizable().scaledToFit()
             } else if state.error != nil {
-                Color.clear.overlay(Image(systemName: "photo"))
+                Image(systemName: "photo")
             } else {
-                Color.clear.overlay(ProgressView())
+                ProgressView()
             }
         }
+        .frame(minWidth: modalWidth, minHeight: modalHeight)
         .contentShape(Rectangle())
         .overlay(alignment: .topTrailing) {
             ImportButton(media: media, selected: $hovering)
         }
-        .frame(minWidth: modalWidth, minHeight: modalHeight)
         .onTapGesture { presentingModal = false }
         .onHover { hovering = $0 }
         .animation(.default, value: hovering)
@@ -99,10 +100,10 @@ private struct ImportButton: View {
                     }
                 }
         }
-        .frame(width: 32, height: 32)
-        .padding(8)
-        .opacity(imported || selected || operating ? 1 : 0)
         .buttonStyle(.plain)
+        .frame(width: 32, height: 32)
+        .padding(5)
+        .opacity(imported || selected || operating ? 1 : 0)
         .onHover { hovering = $0 }
         .animation(.default, value: selected)
         .animation(.default, value: hovering)

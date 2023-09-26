@@ -18,13 +18,13 @@ struct LibraryView: View {
     var body: some View {
         ScrollView {
             VStack {
-                LazyVGrid(columns: columns, spacing: 15) {
+                LazyVGrid(columns: columns, spacing: 10) {
                     InfiniteScroll(id: "library") { image in
                         ImageView(image: image)
                     } loadAction: { page -> Pagination<LocalImage> in
                         let result = try await fetchWorks(page: page)
                         return result.asLocalImage
-                    } onChanged: { loading, page, totalPages, totalItems in
+                    } onChanged: { loading, _, page, totalPages, totalItems in
                         self.loading = loading
                         if let totalPages = totalPages, let totalItems = totalItems {
                             statusMessage = "\(page)/\(totalPages) pages, \(totalItems) works in total"
@@ -77,16 +77,17 @@ private struct ImageView: View {
     var body: some View {
         LazyImage(url: image.url) { state in
             if let image = state.image {
-                image.resizable().scaledToFit()
+                image.resizable()
             } else if state.error != nil {
-                Color.secondary.overlay { Image(systemName: "photo") }
+                Color.clear.overlay { Image(systemName: "photo") }
             } else {
-                Color.secondary
+                Color.clear
             }
         }
         .aspectRatio(CGSize(width: image.width, height: image.height), contentMode: .fit)
-        .cornerRadius(20)
-        .shadow(radius: hovering ? 10 : 5)
+        .contentShape(Rectangle())
+        .cornerRadius(10)
+        .overlay { RoundedRectangle(cornerRadius: 10).stroke(.separator) }
         .sheet(isPresented: $presentingModal) {
             ImageSheet(image: image, presentingModal: $presentingModal)
         }
@@ -105,13 +106,13 @@ private struct ImageSheet: View {
             if let image = state.image {
                 image.resizable().scaledToFit()
             } else if state.error != nil {
-                Color.clear.overlay(Image(systemName: "photo"))
+                Image(systemName: "photo")
             } else {
-                Color.clear.overlay(ProgressView())
+                ProgressView()
             }
         }
-        .contentShape(Rectangle())
         .frame(minWidth: modalWidth, minHeight: modalHeight)
+        .contentShape(Rectangle())
         .onTapGesture { presentingModal = false }
     }
 
