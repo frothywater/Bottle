@@ -5,6 +5,7 @@
 //  Created by Cobalt on 9/8/23.
 //
 
+import CoreTransferable
 import Foundation
 import Nuke
 
@@ -169,6 +170,10 @@ struct UserPostPagination: Decodable {
 
 // MARK: - Extensions
 
+extension CommunityMetadata: Identifiable {
+    var id: String { name }
+}
+
 extension Account: Identifiable {
     var id: String {
         community + String(accountId)
@@ -208,6 +213,16 @@ struct PostMedia: Decodable, Identifiable {
     }
 }
 
+struct LocalImage: Decodable, Identifiable {
+    let id: Int
+    let width: Int
+    let height: Int
+
+    var url: URL? {
+        URL(string: baseURL + "/image/\(id)")
+    }
+}
+
 extension Post {
     var postMedia: [PostMedia] {
         media.enumerated().map { index, media in PostMedia(inner: media, postID: postId, index: index) }
@@ -227,20 +242,34 @@ extension Media: Identifiable {
 }
 
 extension Media {
-    var thumbnailRequest: ImageRequest? {
-        guard let thumbnailUrl = thumbnailUrl, let url = URL(string: thumbnailUrl) else { return nil }
-        if thumbnailUrl.contains("pximg.net") {
-            var urlRequest = URLRequest(url: url)
-            urlRequest.setValue("https://www.pixiv.net", forHTTPHeaderField: "Referer")
-            return ImageRequest(urlRequest: urlRequest)
+    var localURL: String {
+        if let image = work?.images.first, image.path != nil {
+            return baseURL + "/image/\(image.id)"
         } else {
-            return ImageRequest(url: url)
+            return url
         }
     }
 
-    var urlRequest: ImageRequest? {
-        guard let url = URL(string: url) else { return nil }
-        if self.url.contains("pximg.net") {
+    var localThumbnailURL: String? {
+        if let image = work?.images.first, image.path != nil {
+            return baseURL + "/image/\(image.id)"
+        } else {
+            return thumbnailUrl
+        }
+    }
+}
+
+extension LibraryImage {
+    var localImage: LocalImage? {
+        guard let width = width, let height = height else { return nil }
+        return LocalImage(id: id, width: width, height: height)
+    }
+}
+
+extension String {
+    var imageRequest: ImageRequest? {
+        guard let url = URL(string: self) else { return nil }
+        if contains("pximg.net") {
             var urlRequest = URLRequest(url: url)
             urlRequest.setValue("https://www.pixiv.net", forHTTPHeaderField: "Referer")
             return ImageRequest(urlRequest: urlRequest)
@@ -271,6 +300,22 @@ extension Paginated where Item == Post {
     var asPostMedia: Pagination<PostMedia> {
         Pagination<PostMedia>(
             items: items.flatMap { post in post.postMedia },
+            page: page, pageSize: pageSize, totalItems: totalItems, totalPages: totalPages)
+    }
+}
+
+extension Pagination<Work> {
+    var asLocalImage: Pagination<LocalImage> {
+        Pagination<LocalImage>(
+            items: items.flatMap { work in work.images.compactMap(\.localImage) },
+            page: page, pageSize: pageSize, totalItems: totalItems, totalPages: totalPages)
+    }
+}
+
+extension UserPostPagination {
+    var asLocalImage: Pagination<LocalImage> {
+        Pagination<LocalImage>(
+            items: items.flatMap(\.media).compactMap(\.work).flatMap(\.images).compactMap(\.localImage),
             page: page, pageSize: pageSize, totalItems: totalItems, totalPages: totalPages)
     }
 }

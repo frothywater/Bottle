@@ -15,9 +15,10 @@ struct MediaView: View {
     @State private var hovering = false
 
     var body: some View {
-        LazyImage(request: media.inner.thumbnailRequest) { state in
+        LazyImage(request: media.inner.localThumbnailURL?.imageRequest) { state in
             if let image = state.image {
                 image.resizable().scaledToFit()
+                    .draggable(image)
             } else if state.error != nil {
                 Color.clear.overlay { Image(systemName: "photo") }
             } else {
@@ -47,9 +48,10 @@ private struct ImageSheet: View {
     @State private var hovering = false
 
     var body: some View {
-        LazyImage(request: media.inner.urlRequest) { state in
+        LazyImage(request: media.inner.localURL.imageRequest) { state in
             if let image = state.image {
                 image.resizable().scaledToFit()
+                    .draggable(image)
             } else if state.error != nil {
                 Image(systemName: "photo")
             } else {

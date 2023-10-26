@@ -14,9 +14,9 @@ struct BottleApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView(feeds: appState.feeds)
+            ContentView(appState: appState)
                 .onAppear {
-                    ImagePipeline.shared = ImagePipeline(configuration: .withDataCache)
+                    ImagePipeline.shared = ImagePipeline(configuration: .withDataCache(name: "com.frothywater.Bottle.DataCache", sizeLimit: 1024))
                 }
                 .task {
                     do {

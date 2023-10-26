@@ -8,11 +8,11 @@
 import SwiftUI
 
 struct ContentView: View {
-    let feeds: [Feed]
+    let appState: AppState
 
     var body: some View {
         NavigationSplitView {
-            Sidebar(feeds: feeds)
+            Sidebar(appState: appState)
         } detail: {
             Text("Select a feed")
         }
@@ -21,6 +21,6 @@ struct ContentView: View {
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        ContentView(feeds: [])
+        ContentView(appState: AppState())
     }
 }

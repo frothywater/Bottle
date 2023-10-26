@@ -24,6 +24,10 @@
 		516D1B0B2AAACB1E00C90060 /* BottleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 516D1B0A2AAACB1E00C90060 /* BottleTests.swift */; };
 		516D1B152AAACB1E00C90060 /* BottleUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 516D1B142AAACB1E00C90060 /* BottleUITests.swift */; };
 		516D1B172AAACB1E00C90060 /* BottleUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 516D1B162AAACB1E00C90060 /* BottleUITestsLaunchTests.swift */; };
+		51ABF5DA2AEAB24500BCC986 /* LibraryGroupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51ABF5D92AEAB24500BCC986 /* LibraryGroupView.swift */; };
+		51ABF5DC2AEAB80500BCC986 /* GroupedUserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51ABF5DB2AEAB80500BCC986 /* GroupedUserView.swift */; };
+		51ABF5DE2AEAB82C00BCC986 /* PostGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51ABF5DD2AEAB82C00BCC986 /* PostGrid.swift */; };
+		51ABF5E02AEAB9A800BCC986 /* LocalImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51ABF5DF2AEAB9A800BCC986 /* LocalImageView.swift */; };
 		51C363462AC078DF00065E53 /* LibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51C363452AC078DF00065E53 /* LibraryView.swift */; };
 		51C363482AC0908800065E53 /* Util.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51C363472AC0908800065E53 /* Util.swift */; };
 		51CC71192AB1B23E00A85047 /* MediaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51CC71182AB1B23E00A85047 /* MediaView.swift */; };
@@ -67,6 +71,10 @@
 		516D1B102AAACB1E00C90060 /* BottleUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BottleUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		516D1B142AAACB1E00C90060 /* BottleUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BottleUITests.swift; sourceTree = "<group>"; };
 		516D1B162AAACB1E00C90060 /* BottleUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BottleUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		51ABF5D92AEAB24500BCC986 /* LibraryGroupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryGroupView.swift; sourceTree = "<group>"; };
+		51ABF5DB2AEAB80500BCC986 /* GroupedUserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupedUserView.swift; sourceTree = "<group>"; };
+		51ABF5DD2AEAB82C00BCC986 /* PostGrid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostGrid.swift; sourceTree = "<group>"; };
+		51ABF5DF2AEAB9A800BCC986 /* LocalImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalImageView.swift; sourceTree = "<group>"; };
 		51C363452AC078DF00065E53 /* LibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryView.swift; sourceTree = "<group>"; };
 		51C363472AC0908800065E53 /* Util.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Util.swift; sourceTree = "<group>"; };
 		51CC71182AB1B23E00A85047 /* MediaView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaView.swift; sourceTree = "<group>"; };
@@ -144,6 +152,10 @@
 				51EADE6F2AC11E950019A6CE /* Sidebar.swift */,
 				51EADE712AC1241C0019A6CE /* FeedUsersView.swift */,
 				51EADE732AC134840019A6CE /* StatusBar.swift */,
+				51ABF5D92AEAB24500BCC986 /* LibraryGroupView.swift */,
+				51ABF5DB2AEAB80500BCC986 /* GroupedUserView.swift */,
+				51ABF5DD2AEAB82C00BCC986 /* PostGrid.swift */,
+				51ABF5DF2AEAB9A800BCC986 /* LocalImageView.swift */,
 			);
 			path = Bottle;
 			sourceTree = "<group>";
@@ -243,7 +255,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1430;
-				LastUpgradeCheck = 1430;
+				LastUpgradeCheck = 1500;
 				TargetAttributes = {
 					516D1AF42AAACB1A00C90060 = {
 						CreatedOnToolsVersion = 14.3.1;
@@ -312,6 +324,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				51ABF5DC2AEAB80500BCC986 /* GroupedUserView.swift in Sources */,
 				51C363482AC0908800065E53 /* Util.swift in Sources */,
 				51CC71192AB1B23E00A85047 /* MediaView.swift in Sources */,
 				51352AF32AAEBD73000785F7 /* InfiniteScroll.swift in Sources */,
@@ -319,12 +332,15 @@
 				516D1AFB2AAACB1A00C90060 /* ContentView.swift in Sources */,
 				51EADE722AC1241C0019A6CE /* FeedUsersView.swift in Sources */,
 				515A6EFF2AAB180200AA1D43 /* Response.swift in Sources */,
+				51ABF5E02AEAB9A800BCC986 /* LocalImageView.swift in Sources */,
 				51EADE742AC134840019A6CE /* StatusBar.swift in Sources */,
 				51297BD92ABE081D0007340C /* Legacy.swift in Sources */,
 				515A6F012AAB1ED000AA1D43 /* API.swift in Sources */,
 				515A6F032AAB4C8300AA1D43 /* Error.swift in Sources */,
 				51C363462AC078DF00065E53 /* LibraryView.swift in Sources */,
+				51ABF5DA2AEAB24500BCC986 /* LibraryGroupView.swift in Sources */,
 				51EADE702AC11E950019A6CE /* Sidebar.swift in Sources */,
+				51ABF5DE2AEAB82C00BCC986 /* PostGrid.swift in Sources */,
 				516D1AF92AAACB1A00C90060 /* BottleApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -395,9 +411,11 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -453,9 +471,11 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -479,6 +499,7 @@
 				CODE_SIGN_ENTITLEMENTS = Bottle/Bottle.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"Bottle/Preview Content\"";
 				DEVELOPMENT_TEAM = W98RDS8CH5;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -517,6 +538,7 @@
 				CODE_SIGN_ENTITLEMENTS = Bottle/Bottle.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"Bottle/Preview Content\"";
 				DEVELOPMENT_TEAM = W98RDS8CH5;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -554,6 +576,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = W98RDS8CH5;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
@@ -577,6 +600,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = W98RDS8CH5;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
@@ -599,6 +623,7 @@
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = W98RDS8CH5;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
@@ -621,6 +646,7 @@
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = W98RDS8CH5;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.4;

@@ -8,11 +8,11 @@
 import SwiftUI
 
 struct Sidebar: View {
-    let feeds: [Feed]
+    let appState: AppState
 
     private var communityFeeds: [(String, [Feed])] {
         var result = [(String, [Feed])]()
-        for feed in feeds {
+        for feed in appState.feeds {
             if let index = result.firstIndex(where: { $0.0 == feed.community }) {
                 result[index].1.append(feed)
             } else {
@@ -26,10 +26,21 @@ struct Sidebar: View {
     var body: some View {
         List {
             Section("Bottle") {
-                NavigationLink {
-                    LibraryView()
+                DisclosureGroup(isExpanded: .initial(true)) {
+                    ForEach(appState.metadata?.communities ?? []) { community in
+                        NavigationLink {
+                            LibraryGroupView(community: community.name)
+                        } label: {
+                            Label(community.name.capitalized, systemImage: "square.stack")
+                                .foregroundColor(.primary)
+                        }
+                    }
                 } label: {
-                    Label("Library", systemImage: "photo.on.rectangle")
+                    NavigationLink {
+                        LibraryView()
+                    } label: {
+                        Label("Library", systemImage: "photo.on.rectangle")
+                    }
                 }
             }
 
@@ -56,6 +67,6 @@ struct Sidebar: View {
 
 struct Sidebar_Previews: PreviewProvider {
     static var previews: some View {
-        Sidebar(feeds: [])
+        Sidebar(appState: AppState())
     }
 }

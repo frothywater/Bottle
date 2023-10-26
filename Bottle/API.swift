@@ -12,6 +12,8 @@ struct AppState {
     var feeds = [Feed]()
 }
 
+let defaultPageSize = 100
+
 func fetchMetadata() async throws -> AppMetadata {
     let data = try await call(path: "/metadata")
     return try decode(data)
@@ -32,17 +34,17 @@ func fetchFeeds(communityNames: [String]) async throws -> [Feed] {
 }
 
 func fetchPosts(community: String, feedID: Int, page: Int = 0) async throws -> Pagination<Post> {
-    let data = try await call(path: "/\(community)/feed/\(feedID)/posts?page=\(page)")
+    let data = try await call(path: "/\(community)/feed/\(feedID)/posts?page=\(page)&page_size=\(defaultPageSize)")
     return try decode(data)
 }
 
 func fetchWorks(page: Int = 0) async throws -> Pagination<Work> {
-    let data = try await call(path: "/works?page=\(page)")
+    let data = try await call(path: "/works?page=\(page)&page_size=\(defaultPageSize)")
     return try decode(data)
 }
 
 func addWork(community: String, postID: String, page: Int) async throws -> Work {
-    let data = try await call(.post, path: "/\(community)/post/\(postID)/work?page=\(page)")
+    let data = try await call(.post, path: "/\(community)/post/\(postID)/work?page=\(page)&page_size=\(defaultPageSize)")
     return try decode(data)
 }
 
@@ -50,13 +52,23 @@ func deleteWork(workID: Int) async throws {
     _ = try await call(.delete, path: "/work/\(workID)")
 }
 
-func fetchUsers(community: String, feedID: Int, page: Int = 0) async throws -> Pagination<UserWithRecent> {
-    let data = try await call(path: "/\(community)/feed/\(feedID)/users?page=\(page)")
+func fetchFeedUsers(community: String, feedID: Int, page: Int = 0) async throws -> Pagination<UserWithRecent> {
+    let data = try await call(path: "/\(community)/feed/\(feedID)/users?page=\(page)&page_size=\(defaultPageSize)&recent_count=5")
     return try decode(data)
 }
 
-func fetchUserPosts(community: String, feedID: Int, userID: String, page: Int = 0) async throws -> UserPostPagination {
-    let data = try await call(path: "/\(community)/feed/\(feedID)/user/\(userID)?page=\(page)")
+func fetchFeedUserPosts(community: String, feedID: Int, userID: String, page: Int = 0) async throws -> UserPostPagination {
+    let data = try await call(path: "/\(community)/feed/\(feedID)/user/\(userID)?page=\(page)&page_size=\(defaultPageSize)")
+    return try decode(data)
+}
+
+func fetchArchivedUsers(community: String, page: Int = 0) async throws -> Pagination<UserWithRecent> {
+    let data = try await call(path: "/\(community)/work/users?page=\(page)&page_size=\(defaultPageSize)&recent_count=5")
+    return try decode(data)
+}
+
+func fetchArchivedUserPosts(community: String, userID: String, page: Int = 0) async throws -> UserPostPagination {
+    let data = try await call(path: "/\(community)/work/user/\(userID)?page=\(page)&page_size=\(defaultPageSize)")
     return try decode(data)
 }
 
