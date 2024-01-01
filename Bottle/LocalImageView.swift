@@ -12,55 +12,65 @@ struct LocalImageView: View {
     let image: LocalImage
 
     @State private var presentingModal = false
-    @State private var hovering = false
 
     var body: some View {
-        LazyImage(url: image.url) { state in
-            if let image = state.image {
-                image.resizable()
-                    .draggable(image)
-            } else if state.error != nil {
-                Color.clear.overlay { Image(systemName: "photo") }
-            } else {
-                Color.clear
+        NavigationLink {
+            ImageSheet(image: image)
+        } label: {
+            LazyImage(url: image.url) { state in
+                if let fetchedImage = state.image {
+                    fetchedImage.resizable()
+                    // TODO: draggable
+                } else if state.error != nil {
+                    Color.clear.overlay { Image(systemName: "photo") }
+                } else {
+                    Color.clear
+                }
             }
+            .aspectRatio(CGSize(width: image.width, height: image.height), contentMode: .fit)
+            .contentShape(Rectangle())
+            .cornerRadius(10)
         }
-        .aspectRatio(CGSize(width: image.width, height: image.height), contentMode: .fit)
-        .contentShape(Rectangle())
-        .cornerRadius(10)
+        .buttonStyle(.plain)
         .overlay { RoundedRectangle(cornerRadius: 10).stroke(.separator) }
-        .sheet(isPresented: $presentingModal) {
-            ImageSheet(image: image, presentingModal: $presentingModal)
-        }
         .onTapGesture { presentingModal = true }
-        .onHover { hovering = $0 }
-        .animation(.default, value: hovering)
     }
 }
 
 private struct ImageSheet: View {
     let image: LocalImage
-    @Binding var presentingModal: Bool
+
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         LazyImage(url: image.url) { state in
-            if let image = state.image {
-                image.resizable().scaledToFit()
-                    .draggable(image)
+            if let fetchedImage = state.image {
+                fetchedImage.resizable().scaledToFit()
+                #if os(iOS)
+                    .zoomable()
+                #endif
+                // TODO: draggable
             } else if state.error != nil {
                 Image(systemName: "photo")
             } else {
                 ProgressView()
             }
         }
-        .frame(minWidth: modalWidth, minHeight: modalHeight)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .contentShape(Rectangle())
-        .onTapGesture { presentingModal = false }
+        .onTapGesture { dismiss() }
     }
+}
 
-    private var mediaRatio: CGFloat { CGFloat(image.width) / CGFloat(image.height) }
-    private var maxWidth: CGFloat { Legacy.screenWidth ?? 800 }
-    private var maxHeight: CGFloat { (Legacy.screenHeight ?? 600) * 0.95 }
-    private var modalWidth: CGFloat { mediaRatio > Legacy.screenRatio ? maxWidth : maxHeight * mediaRatio }
-    private var modalHeight: CGFloat { mediaRatio > Legacy.screenRatio ? maxWidth / mediaRatio : maxHeight }
+private struct DraggableImage: Transferable {
+    let image: LocalImage
+    let data: Data
+
+    static var transferRepresentation: some TransferRepresentation {
+        FileRepresentation(exportedContentType: .image) {
+            let tempURL = FileManager.default.temporaryDirectory.appending(component: $0.image.filename)
+            try $0.data.write(to: tempURL)
+            return SentTransferredFile(tempURL)
+        }
+    }
 }

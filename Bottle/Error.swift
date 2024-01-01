@@ -9,6 +9,7 @@ import Foundation
 
 enum AppError: Error {
     case invalidMetadata
+    case invalidServer
     case badStatus(code: Int?, content: String?)
 }
 
@@ -17,6 +18,8 @@ extension AppError: LocalizedError {
         switch self {
         case .invalidMetadata:
             return "Invalid metadata"
+        case .invalidServer:
+            return "Invalid server"
         case .badStatus(let code, let content):
             return "Bad status \(code?.description ?? ""): \(content ?? "(empty)")"
         }

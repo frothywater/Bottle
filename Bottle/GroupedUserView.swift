@@ -8,37 +8,7 @@
 import NukeUI
 import SwiftUI
 
-struct GroupedUserPostView<Media: Identifiable & Decodable, Content: View>: View {
-    let id: String
-    @ViewBuilder let content: (_ media: Media) -> Content
-    let loadUsers: (_ page: Int) async throws -> Pagination<UserWithRecent>
-    let loadMedia: (_ userID: String, _ page: Int) async throws -> Pagination<Media>
-    @State private var selection: UserWithRecent?
-
-    var body: some View {
-        HSplitView {
-            UserList(id: id, selection: $selection) { page in
-                try await loadUsers(page)
-            }
-            .frame(minWidth: 300, idealWidth: 300, maxWidth: 600)
-            Group {
-                if let userID = selection?.user.userId {
-                    PostGrid(id: id + userID) { media in
-                        content(media)
-                    } loadMedia: { page in
-                        try await loadMedia(userID, page)
-                    }
-                } else {
-                    Text("Select a artist")
-                }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .layoutPriority(1)
-        }
-    }
-}
-
-private struct UserList: View {
+struct UserList: View {
     let id: String
     @Binding var selection: UserWithRecent?
     let loadUsers: (_ page: Int) async throws -> Pagination<UserWithRecent>
@@ -53,6 +23,7 @@ private struct UserList: View {
             InfiniteScroll(id: id) { item in
                 UserRecentRow(item: item)
                     .padding([.top, .bottom], 5)
+                    .fixVerticalScrolling()
             } loadAction: { page in
                 try await loadUsers(page)
             } onChanged: { loading, items, page, totalPages, totalItems in
@@ -63,6 +34,7 @@ private struct UserList: View {
                 }
             }
         }
+        .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .overlay(alignment: .bottom) {
             StatusBar(message: statusMessage)
@@ -103,7 +75,7 @@ private struct UserRecentRow: View {
 
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack(spacing: 5) {
-                    ForEach(item.posts.flatMap(\.media)) { media in
+                    ForEach(item.posts.compactMap(\.media).flatMap { $0 }) { media in
                         LazyImage(request: media.localThumbnailURL?.imageRequest) { state in
                             if let image = state.image {
                                 image.resizable().scaledToFit()
@@ -113,7 +85,7 @@ private struct UserRecentRow: View {
                                 Color.clear
                             }
                         }
-                        .aspectRatio(CGSize(width: media.width, height: media.height), contentMode: .fit)
+                        .fit(width: media.width, height: media.height)
                         .frame(height: 100)
                         .cornerRadius(5)
                         .overlay { RoundedRectangle(cornerRadius: 5).stroke(.separator) }

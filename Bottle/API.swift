@@ -7,11 +7,6 @@
 
 import Foundation
 
-struct AppState {
-    var metadata: AppMetadata?
-    var feeds = [Feed]()
-}
-
 let defaultPageSize = 100
 
 func fetchMetadata() async throws -> AppMetadata {
@@ -43,8 +38,9 @@ func fetchWorks(page: Int = 0) async throws -> Pagination<Work> {
     return try decode(data)
 }
 
-func addWork(community: String, postID: String, page: Int) async throws -> Work {
-    let data = try await call(.post, path: "/\(community)/post/\(postID)/work?page=\(page)&page_size=\(defaultPageSize)")
+func addWork(community: String, postID: String, page: Int?) async throws -> Work {
+    let path = "/\(community)/post/\(postID)/work" + (page.map { "?page=\($0)" } ?? "")
+    let data = try await call(.post, path: path)
     return try decode(data)
 }
 
@@ -53,7 +49,7 @@ func deleteWork(workID: Int) async throws {
 }
 
 func fetchFeedUsers(community: String, feedID: Int, page: Int = 0) async throws -> Pagination<UserWithRecent> {
-    let data = try await call(path: "/\(community)/feed/\(feedID)/users?page=\(page)&page_size=\(defaultPageSize)&recent_count=5")
+    let data = try await call(path: "/\(community)/feed/\(feedID)/users?page=\(page)&page_size=30&recent_count=5")
     return try decode(data)
 }
 
@@ -63,7 +59,7 @@ func fetchFeedUserPosts(community: String, feedID: Int, userID: String, page: In
 }
 
 func fetchArchivedUsers(community: String, page: Int = 0) async throws -> Pagination<UserWithRecent> {
-    let data = try await call(path: "/\(community)/work/users?page=\(page)&page_size=\(defaultPageSize)&recent_count=5")
+    let data = try await call(path: "/\(community)/work/users?page=\(page)&page_size=30&recent_count=5")
     return try decode(data)
 }
 
@@ -74,7 +70,9 @@ func fetchArchivedUserPosts(community: String, userID: String, page: Int = 0) as
 
 // MARK: - Helper
 
-let baseURL = "http://127.0.0.1:6000"
+func getServerURL() -> String? {
+    UserDefaults.standard.string(forKey: "serverAddress")
+}
 
 private enum HTTPMethod: String {
     case get = "GET"
@@ -83,6 +81,9 @@ private enum HTTPMethod: String {
 }
 
 private func call(_ method: HTTPMethod = .get, path: String) async throws -> Data {
+    guard let baseURL = getServerURL() else {
+        throw AppError.invalidServer
+    }
     var request = URLRequest(url: URL(string: baseURL + path)!)
     request.httpMethod = method.rawValue
     let (data, response) = try await URLSession.shared.data(for: request)

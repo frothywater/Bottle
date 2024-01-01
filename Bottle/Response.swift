@@ -91,7 +91,9 @@ struct Post: Decodable {
     let community: String
     let user: User?
     let text: String
-    let media: [Media]
+    let thumbnailUrl: String?
+    let media: [Media]?
+    let work: Work?
     let createdDate: Date
     let addedDate: Date
 }
@@ -109,9 +111,9 @@ struct User: Decodable {
 struct Media: Decodable {
     let mediaId: String
     let community: String
-    let url: String
-    let width: Int
-    let height: Int
+    let url: String?
+    let width: Int?
+    let height: Int?
     let thumbnailUrl: String?
     let work: Work?
 }
@@ -171,7 +173,17 @@ struct UserPostPagination: Decodable {
 // MARK: - Extensions
 
 extension CommunityMetadata: Identifiable {
-    var id: String { name }
+    var id: String { "community_" + name }
+}
+
+extension CommunityMetadata: Hashable {
+    static func == (lhs: CommunityMetadata, rhs: CommunityMetadata) -> Bool {
+        lhs.id == rhs.id
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
 }
 
 extension Account: Identifiable {
@@ -182,18 +194,17 @@ extension Account: Identifiable {
 
 extension Feed: Identifiable {
     var id: String {
-        community + String(feedId)
+        "feed_\(community)_\(feedId)"
     }
 }
 
 extension Feed: Hashable {
     static func == (lhs: Feed, rhs: Feed) -> Bool {
-        lhs.community == rhs.community && lhs.feedId == rhs.feedId
+        lhs.id == rhs.id
     }
 
     func hash(into hasher: inout Hasher) {
-        hasher.combine(community)
-        hasher.combine(feedId)
+        hasher.combine(id)
     }
 }
 
@@ -206,10 +217,10 @@ extension Post: Identifiable {
 struct PostMedia: Decodable, Identifiable {
     let inner: Media
     let postID: String
-    let index: Int
+    let index: Int?
 
     var id: String {
-        "\(inner.id):\(index)"
+        if let index = index { "\(inner.id):\(index)" } else { inner.id }
     }
 }
 
@@ -217,15 +228,24 @@ struct LocalImage: Decodable, Identifiable {
     let id: Int
     let width: Int
     let height: Int
+    let filename: String
 
     var url: URL? {
-        URL(string: baseURL + "/image/\(id)")
+        guard let baseURL = getServerURL() else { return nil }
+        return URL(string: baseURL + "/image/\(id)")
     }
 }
 
 extension Post {
     var postMedia: [PostMedia] {
-        media.enumerated().map { index, media in PostMedia(inner: media, postID: postId, index: index) }
+        if let media = media {
+            return media.enumerated().map { index, media in PostMedia(inner: media, postID: postId, index: index) }
+        } else {
+            // Temporary workaround for posts that have no media (panda)
+            return [PostMedia(
+                inner: Media(mediaId: community + postId, community: community, url: nil, width: nil, height: nil, thumbnailUrl: thumbnailUrl, work: nil),
+                postID: postId, index: nil)]
+        }
     }
 }
 
@@ -242,8 +262,9 @@ extension Media: Identifiable {
 }
 
 extension Media {
-    var localURL: String {
+    var localURL: String? {
         if let image = work?.images.first, image.path != nil {
+            guard let baseURL = getServerURL() else { return nil }
             return baseURL + "/image/\(image.id)"
         } else {
             return url
@@ -252,6 +273,7 @@ extension Media {
 
     var localThumbnailURL: String? {
         if let image = work?.images.first, image.path != nil {
+            guard let baseURL = getServerURL() else { return nil }
             return baseURL + "/image/\(image.id)"
         } else {
             return thumbnailUrl
@@ -262,7 +284,7 @@ extension Media {
 extension LibraryImage {
     var localImage: LocalImage? {
         guard let width = width, let height = height else { return nil }
-        return LocalImage(id: id, width: width, height: height)
+        return LocalImage(id: id, width: width, height: height, filename: filename)
     }
 }
 
@@ -277,10 +299,26 @@ extension String {
             return ImageRequest(url: url)
         }
     }
+
+    var filename: String? {
+        guard let url = URL(string: self) else { return nil }
+        return url.lastPathComponent
+    }
 }
 
 extension UserWithRecent: Identifiable {
     var id: String { user.id }
+}
+
+extension UserWithRecent: Hashable {
+    static func == (lhs: UserWithRecent, rhs: UserWithRecent) -> Bool {
+        lhs.user.community == rhs.user.community && lhs.user.userId == rhs.user.userId
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(user.community)
+        hasher.combine(user.userId)
+    }
 }
 
 protocol Paginated {
@@ -314,8 +352,10 @@ extension Pagination<Work> {
 
 extension UserPostPagination {
     var asLocalImage: Pagination<LocalImage> {
-        Pagination<LocalImage>(
-            items: items.flatMap(\.media).compactMap(\.work).flatMap(\.images).compactMap(\.localImage),
+        let media = items.compactMap(\.media).joined()
+        let images = media.compactMap(\.work).flatMap(\.images)
+        return Pagination<LocalImage>(
+            items: images.compactMap(\.localImage),
             page: page, pageSize: pageSize, totalItems: totalItems, totalPages: totalPages)
     }
 }

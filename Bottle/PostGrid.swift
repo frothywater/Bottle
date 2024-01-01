@@ -20,24 +20,19 @@ struct PostGrid<Media: Identifiable & Decodable, Content: View>: View {
 
     var body: some View {
         ScrollView {
-            VStack {
-                LazyVGrid(columns: columns, spacing: 10) {
-                    InfiniteScroll(id: id) { media in
-                        content(media)
-                    } loadAction: { page in
-                        try await loadMedia(page)
-                    } onChanged: { loading, _, page, totalPages, totalItems in
-                        self.loading = loading
-                        if let totalPages = totalPages, let totalItems = totalItems {
-                            statusMessage = "\(page)/\(totalPages) pages, \(totalItems) posts in total"
-                        }
+            LazyVGrid(columns: columns, spacing: 10) {
+                InfiniteScroll(id: id) { media in
+                    content(media)
+                } loadAction: { page in
+                    try await loadMedia(page)
+                } onChanged: { loading, _, page, totalPages, totalItems in
+                    self.loading = loading
+                    if let totalPages = totalPages, let totalItems = totalItems {
+                        statusMessage = "\(page)/\(totalPages) pages, \(totalItems) posts in total"
                     }
                 }
-                if loading {
-                    ProgressView()
-                }
             }
-            .padding()
+            .padding(5)
         }
         .overlay(alignment: .bottom) {
             StatusBar(message: statusMessage, columnCount: $columnCount)

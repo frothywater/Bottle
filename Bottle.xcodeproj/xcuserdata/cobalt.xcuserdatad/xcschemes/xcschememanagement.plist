@@ -4,10 +4,33 @@
 <dict>
 	<key>SchemeUserState</key>
 	<dict>
+		<key>Bottle (release).xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>1</integer>
+		</dict>
 		<key>Bottle.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
 			<integer>0</integer>
+		</dict>
+	</dict>
+	<key>SuppressBuildableAutocreation</key>
+	<dict>
+		<key>516D1AF42AAACB1A00C90060</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>516D1B052AAACB1E00C90060</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>516D1B0F2AAACB1E00C90060</key>
+		<dict>
+			<key>primary</key>
+			<true/>
 		</dict>
 	</dict>
 </dict>

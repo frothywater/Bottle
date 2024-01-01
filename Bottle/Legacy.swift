@@ -20,13 +20,15 @@ struct Legacy {
         static var screenSize = WKInterfaceDevice.current().screenBounds.size
     #elseif os(iOS) || os(tvOS)
         static var screenSize = UIScreen.main.nativeBounds.size
+        static var screenWidth = screenSize.width
+        static var screenHeight = screenSize.height
+        static var screenRatio = screenWidth / screenHeight
     #elseif os(macOS)
         static var screenSize = NSApp.keyWindow?.contentView?.bounds.size
+        static var screenWidth = screenSize?.width
+        static var screenHeight = screenSize?.height
+        static var screenRatio = (screenWidth ?? 0) / (screenHeight ?? 1)
     #endif
-
-    static var screenWidth = screenSize?.width
-    static var screenHeight = screenSize?.height
-    static var screenRatio = (screenWidth ?? 0) / (screenHeight ?? 1)
 
     static func toggleSidebar() {
         #if os(iOS)

@@ -12,3 +12,13 @@ extension Binding {
         return Binding(get: { value }, set: { _ in })
     }
 }
+
+extension View {
+    @ViewBuilder func fit(width: Int?, height: Int?) -> some View {
+        if let width = width, let height = height {
+            self.aspectRatio(CGSize(width: width, height: height), contentMode: .fit)
+        } else {
+            self
+        }
+    }
+}

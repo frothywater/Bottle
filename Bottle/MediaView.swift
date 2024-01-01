@@ -12,80 +12,68 @@ struct MediaView: View {
     let media: PostMedia
 
     @State private var presentingModal = false
-    @State private var hovering = false
 
     var body: some View {
-        LazyImage(request: media.inner.localThumbnailURL?.imageRequest) { state in
-            if let image = state.image {
-                image.resizable().scaledToFit()
-                    .draggable(image)
-            } else if state.error != nil {
-                Color.clear.overlay { Image(systemName: "photo") }
-            } else {
-                Color.clear
+        NavigationLink {
+            ImageSheet(media: media)
+        } label: {
+            LazyImage(request: media.inner.localThumbnailURL?.imageRequest) { state in
+                if let image = state.image {
+                    image.resizable().scaledToFit()
+                        .draggable(image)
+                } else if state.error != nil {
+                    Color.clear.overlay { Image(systemName: "photo") }
+                } else {
+                    Color.clear
+                }
             }
+            .fit(width: media.inner.width, height: media.inner.height)
+            .contentShape(Rectangle())
+            .cornerRadius(10)
         }
-        .aspectRatio(CGSize(width: media.inner.width, height: media.inner.height), contentMode: .fit)
-        .contentShape(Rectangle())
-        .cornerRadius(10)
+        .buttonStyle(.plain)
         .overlay { RoundedRectangle(cornerRadius: 10).stroke(.separator) }
-        .sheet(isPresented: $presentingModal) {
-            ImageSheet(media: media, presentingModal: $presentingModal)
-        }
         .overlay(alignment: .topTrailing) {
-            ImportButton(media: media, selected: $hovering)
+            ImportButton(media: media)
         }
-        .onTapGesture { presentingModal = true }
-        .onHover { hovering = $0 }
-        .animation(.default, value: hovering)
     }
 }
 
 private struct ImageSheet: View {
     let media: PostMedia
-    @Binding var presentingModal: Bool
 
-    @State private var hovering = false
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        LazyImage(request: media.inner.localURL.imageRequest) { state in
+        LazyImage(request: (media.inner.localURL ?? "").imageRequest) { state in
             if let image = state.image {
                 image.resizable().scaledToFit()
                     .draggable(image)
+                #if os(iOS)
+                    .zoomable()
+                #endif
             } else if state.error != nil {
                 Image(systemName: "photo")
             } else {
                 ProgressView()
             }
         }
-        .frame(minWidth: modalWidth, minHeight: modalHeight)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .contentShape(Rectangle())
+        .onTapGesture { dismiss() }
         .overlay(alignment: .topTrailing) {
-            ImportButton(media: media, selected: $hovering)
+            ImportButton(media: media)
         }
-        .onTapGesture { presentingModal = false }
-        .onHover { hovering = $0 }
-        .animation(.default, value: hovering)
     }
-
-    private var mediaRatio: CGFloat { CGFloat(media.inner.width) / CGFloat(media.inner.height) }
-    private var maxWidth: CGFloat { Legacy.screenWidth ?? 800 }
-    private var maxHeight: CGFloat { (Legacy.screenHeight ?? 600) * 0.95 }
-    private var modalWidth: CGFloat { mediaRatio > Legacy.screenRatio ? maxWidth : maxHeight * mediaRatio }
-    private var modalHeight: CGFloat { mediaRatio > Legacy.screenRatio ? maxWidth / mediaRatio : maxHeight }
 }
 
 private struct ImportButton: View {
     let media: PostMedia
-    @Binding var selected: Bool
-
-    @State var hovering = false
     @State var operating = false
     @State var work: Work?
 
-    init(media: PostMedia, selected: Binding<Bool>) {
+    init(media: PostMedia) {
         self.media = media
-        _selected = selected
         _work = State(initialValue: media.inner.work)
     }
 
@@ -105,15 +93,11 @@ private struct ImportButton: View {
         .buttonStyle(.plain)
         .frame(width: 32, height: 32)
         .padding(5)
-        .opacity(imported || selected || operating ? 1 : 0)
-        .onHover { hovering = $0 }
-        .animation(.default, value: selected)
-        .animation(.default, value: hovering)
         .animation(.default, value: imported)
         .animation(.default, value: operating)
     }
 
-    private var symbol: String { hovering != imported ? "bookmark.fill" : "bookmark" }
+    private var symbol: String { imported ? "bookmark.fill" : "bookmark" }
 
     private var imported: Bool { work != nil }
 
@@ -147,7 +131,7 @@ struct ImageView_Previews: PreviewProvider {
 
     static var previews: some View {
         MediaView(media: example)
-        ImageSheet(media: example, presentingModal: .constant(true))
-        ImportButton(media: example, selected: .constant(true))
+        ImageSheet(media: example)
+        ImportButton(media: example)
     }
 }

@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		51297BD92ABE081D0007340C /* Legacy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51297BD82ABE081D0007340C /* Legacy.swift */; };
 		51352AF32AAEBD73000785F7 /* InfiniteScroll.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51352AF22AAEBD73000785F7 /* InfiniteScroll.swift */; };
-		514D08FE2AAC3E270084C4BD /* FeedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 514D08FD2AAC3E270084C4BD /* FeedView.swift */; };
 		514D09012AAC48EE0084C4BD /* Nuke in Frameworks */ = {isa = PBXBuildFile; productRef = 514D09002AAC48EE0084C4BD /* Nuke */; };
 		514D09032AAC48EE0084C4BD /* NukeExtensions in Frameworks */ = {isa = PBXBuildFile; productRef = 514D09022AAC48EE0084C4BD /* NukeExtensions */; };
 		514D09052AAC48EE0084C4BD /* NukeUI in Frameworks */ = {isa = PBXBuildFile; productRef = 514D09042AAC48EE0084C4BD /* NukeUI */; };
@@ -24,16 +23,15 @@
 		516D1B0B2AAACB1E00C90060 /* BottleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 516D1B0A2AAACB1E00C90060 /* BottleTests.swift */; };
 		516D1B152AAACB1E00C90060 /* BottleUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 516D1B142AAACB1E00C90060 /* BottleUITests.swift */; };
 		516D1B172AAACB1E00C90060 /* BottleUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 516D1B162AAACB1E00C90060 /* BottleUITestsLaunchTests.swift */; };
-		51ABF5DA2AEAB24500BCC986 /* LibraryGroupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51ABF5D92AEAB24500BCC986 /* LibraryGroupView.swift */; };
 		51ABF5DC2AEAB80500BCC986 /* GroupedUserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51ABF5DB2AEAB80500BCC986 /* GroupedUserView.swift */; };
 		51ABF5DE2AEAB82C00BCC986 /* PostGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51ABF5DD2AEAB82C00BCC986 /* PostGrid.swift */; };
 		51ABF5E02AEAB9A800BCC986 /* LocalImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51ABF5DF2AEAB9A800BCC986 /* LocalImageView.swift */; };
-		51C363462AC078DF00065E53 /* LibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51C363452AC078DF00065E53 /* LibraryView.swift */; };
 		51C363482AC0908800065E53 /* Util.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51C363472AC0908800065E53 /* Util.swift */; };
 		51CC71192AB1B23E00A85047 /* MediaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51CC71182AB1B23E00A85047 /* MediaView.swift */; };
-		51EADE702AC11E950019A6CE /* Sidebar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51EADE6F2AC11E950019A6CE /* Sidebar.swift */; };
-		51EADE722AC1241C0019A6CE /* FeedUsersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51EADE712AC1241C0019A6CE /* FeedUsersView.swift */; };
+		51DAFC912AECBE60004B019A /* VerticalScrollFix.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51DAFC902AECBE60004B019A /* VerticalScrollFix.swift */; };
 		51EADE742AC134840019A6CE /* StatusBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51EADE732AC134840019A6CE /* StatusBar.swift */; };
+		51FB0E312B412ED90065BF35 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51FB0E302B412ED90065BF35 /* AppState.swift */; };
+		51FF117C2B3F214D00D31336 /* Zoom.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51FF117B2B3F214D00D31336 /* Zoom.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -56,7 +54,6 @@
 /* Begin PBXFileReference section */
 		51297BD82ABE081D0007340C /* Legacy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Legacy.swift; sourceTree = "<group>"; };
 		51352AF22AAEBD73000785F7 /* InfiniteScroll.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfiniteScroll.swift; sourceTree = "<group>"; };
-		514D08FD2AAC3E270084C4BD /* FeedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedView.swift; sourceTree = "<group>"; };
 		515A6EFE2AAB180200AA1D43 /* Response.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Response.swift; sourceTree = "<group>"; };
 		515A6F002AAB1ED000AA1D43 /* API.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = API.swift; sourceTree = "<group>"; };
 		515A6F022AAB4C8200AA1D43 /* Error.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Error.swift; sourceTree = "<group>"; };
@@ -71,16 +68,15 @@
 		516D1B102AAACB1E00C90060 /* BottleUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BottleUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		516D1B142AAACB1E00C90060 /* BottleUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BottleUITests.swift; sourceTree = "<group>"; };
 		516D1B162AAACB1E00C90060 /* BottleUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BottleUITestsLaunchTests.swift; sourceTree = "<group>"; };
-		51ABF5D92AEAB24500BCC986 /* LibraryGroupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryGroupView.swift; sourceTree = "<group>"; };
 		51ABF5DB2AEAB80500BCC986 /* GroupedUserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupedUserView.swift; sourceTree = "<group>"; };
 		51ABF5DD2AEAB82C00BCC986 /* PostGrid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostGrid.swift; sourceTree = "<group>"; };
 		51ABF5DF2AEAB9A800BCC986 /* LocalImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalImageView.swift; sourceTree = "<group>"; };
-		51C363452AC078DF00065E53 /* LibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryView.swift; sourceTree = "<group>"; };
 		51C363472AC0908800065E53 /* Util.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Util.swift; sourceTree = "<group>"; };
 		51CC71182AB1B23E00A85047 /* MediaView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaView.swift; sourceTree = "<group>"; };
-		51EADE6F2AC11E950019A6CE /* Sidebar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sidebar.swift; sourceTree = "<group>"; };
-		51EADE712AC1241C0019A6CE /* FeedUsersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedUsersView.swift; sourceTree = "<group>"; };
+		51DAFC902AECBE60004B019A /* VerticalScrollFix.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VerticalScrollFix.swift; sourceTree = "<group>"; };
 		51EADE732AC134840019A6CE /* StatusBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBar.swift; sourceTree = "<group>"; };
+		51FB0E302B412ED90065BF35 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		51FF117B2B3F214D00D31336 /* Zoom.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Zoom.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -143,19 +139,17 @@
 				515A6EFE2AAB180200AA1D43 /* Response.swift */,
 				515A6F002AAB1ED000AA1D43 /* API.swift */,
 				515A6F022AAB4C8200AA1D43 /* Error.swift */,
-				514D08FD2AAC3E270084C4BD /* FeedView.swift */,
 				51352AF22AAEBD73000785F7 /* InfiniteScroll.swift */,
 				51CC71182AB1B23E00A85047 /* MediaView.swift */,
 				51297BD82ABE081D0007340C /* Legacy.swift */,
-				51C363452AC078DF00065E53 /* LibraryView.swift */,
 				51C363472AC0908800065E53 /* Util.swift */,
-				51EADE6F2AC11E950019A6CE /* Sidebar.swift */,
-				51EADE712AC1241C0019A6CE /* FeedUsersView.swift */,
 				51EADE732AC134840019A6CE /* StatusBar.swift */,
-				51ABF5D92AEAB24500BCC986 /* LibraryGroupView.swift */,
 				51ABF5DB2AEAB80500BCC986 /* GroupedUserView.swift */,
 				51ABF5DD2AEAB82C00BCC986 /* PostGrid.swift */,
 				51ABF5DF2AEAB9A800BCC986 /* LocalImageView.swift */,
+				51DAFC902AECBE60004B019A /* VerticalScrollFix.swift */,
+				51FF117B2B3F214D00D31336 /* Zoom.swift */,
+				51FB0E302B412ED90065BF35 /* AppState.swift */,
 			);
 			path = Bottle;
 			sourceTree = "<group>";
@@ -326,20 +320,18 @@
 			files = (
 				51ABF5DC2AEAB80500BCC986 /* GroupedUserView.swift in Sources */,
 				51C363482AC0908800065E53 /* Util.swift in Sources */,
+				51FF117C2B3F214D00D31336 /* Zoom.swift in Sources */,
 				51CC71192AB1B23E00A85047 /* MediaView.swift in Sources */,
 				51352AF32AAEBD73000785F7 /* InfiniteScroll.swift in Sources */,
-				514D08FE2AAC3E270084C4BD /* FeedView.swift in Sources */,
+				51DAFC912AECBE60004B019A /* VerticalScrollFix.swift in Sources */,
 				516D1AFB2AAACB1A00C90060 /* ContentView.swift in Sources */,
-				51EADE722AC1241C0019A6CE /* FeedUsersView.swift in Sources */,
+				51FB0E312B412ED90065BF35 /* AppState.swift in Sources */,
 				515A6EFF2AAB180200AA1D43 /* Response.swift in Sources */,
 				51ABF5E02AEAB9A800BCC986 /* LocalImageView.swift in Sources */,
 				51EADE742AC134840019A6CE /* StatusBar.swift in Sources */,
 				51297BD92ABE081D0007340C /* Legacy.swift in Sources */,
 				515A6F012AAB1ED000AA1D43 /* API.swift in Sources */,
 				515A6F032AAB4C8300AA1D43 /* Error.swift in Sources */,
-				51C363462AC078DF00065E53 /* LibraryView.swift in Sources */,
-				51ABF5DA2AEAB24500BCC986 /* LibraryGroupView.swift in Sources */,
-				51EADE702AC11E950019A6CE /* Sidebar.swift in Sources */,
 				51ABF5DE2AEAB82C00BCC986 /* PostGrid.swift in Sources */,
 				516D1AF92AAACB1A00C90060 /* BottleApp.swift in Sources */,
 			);
@@ -515,10 +507,10 @@
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
-				MACOSX_DEPLOYMENT_TARGET = 13.3;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.frothywater.Bottle;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -554,10 +546,10 @@
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
-				MACOSX_DEPLOYMENT_TARGET = 13.3;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.frothywater.Bottle;
 				PRODUCT_NAME = "$(TARGET_NAME)";

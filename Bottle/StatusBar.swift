@@ -24,22 +24,22 @@ struct StatusBar: View {
             Text(message)
                 .font(.caption).foregroundColor(.secondary)
             if hasSlider {
-                Slider(value: $columnCount, in: 1 ... 10, step: 1)
-                    .controlSize(.small)
+                Slider(value: $columnCount, in: 1 ... 6, step: 1)
+                    .controlSize(.mini)
                     .frame(width: 120)
                     .frame(maxWidth: .infinity, alignment: .trailing)
             }
         }
+        .frame(height: 30)
         .frame(maxWidth: .infinity)
-        .padding([.top, .bottom], 5)
         .padding([.leading, .trailing], 15)
-        .background { Rectangle().fill(.thickMaterial) }
-        .overlay(alignment: .top) { Divider() }
+        .background { Rectangle().fill(.regularMaterial) }
     }
 }
 
 struct StatusBar_Previews: PreviewProvider {
     static var previews: some View {
+        StatusBar(message: "message")
         StatusBar(message: "message", columnCount: .initial(3))
     }
 }
