@@ -12,10 +12,10 @@ struct ContentView: View {
     
     @AppStorage("serverAddress") var serverAddress: String = ""
     
-    @State private var communityOrFeedSelection: String?
-    @State private var userSelection: UserWithRecent?
+    @State private var destinationSelection: SidebarDestination?
+    @State private var userSelection: User.ID?
     @State private var showingSetting = false
-    @State private var showingGroupedUser = true
+    @State private var showingGroupedUser = false
     
     var body: some View {
         Group {
@@ -24,10 +24,10 @@ struct ContentView: View {
                 NavigationSplitView {
                     sidebar
                 } content: {
-                    destination(id: communityOrFeedSelection)
+                    destination(for: destinationSelection)
                 } detail: {
                     NavigationStack {
-                        thirdDestination(id: communityOrFeedSelection)
+                        thirdDestination(for: destinationSelection)
                     }
                 }
             } else {
@@ -36,7 +36,7 @@ struct ContentView: View {
                     sidebar
                 } detail: {
                     NavigationStack {
-                        destination(id: communityOrFeedSelection)
+                        destination(for: destinationSelection)
                     }
                 }
             }
@@ -44,7 +44,7 @@ struct ContentView: View {
     }
     
     private var sidebar: some View {
-        List(selection: $communityOrFeedSelection) {
+        List(selection: $destinationSelection) {
             librarySection
             feedSection
         }
@@ -55,7 +55,7 @@ struct ContentView: View {
     private var librarySection: some View {
         Section("Bottle") {
             DisclosureGroup(isExpanded: .initial(true)) {
-                ForEach(appState.metadata?.communities ?? []) { community in
+                ForEach(appState.metadata?.communities ?? [], id: \.destination) { community in
                     // Click each community in the library to view all posts in that community.
                     // Always show grouped user view.
                     Label(community.name.capitalized, systemImage: "square.stack")
@@ -71,7 +71,7 @@ struct ContentView: View {
         Section("Feeds") {
             ForEach(appState.communityFeeds, id: \.0) { community, feeds in
                 DisclosureGroup(isExpanded: .initial(true)) {
-                    ForEach(feeds) { feed in
+                    ForEach(feeds, id: \.destination) { feed in
                         // Click each feed to view all posts in that feed.
                         // Grouped view available.
                         Label(feed.name.capitalized, systemImage: "doc.text.image")
@@ -86,15 +86,16 @@ struct ContentView: View {
     }
 
     @ViewBuilder
-    private func destination(id: String?) -> some View {
-        if let community = appState.metadata?.communities.first(where: { $0.id == id }) {
+    private func destination(for selection: SidebarDestination?) -> some View {
+        if case .community(let community) = selection {
             if showingGroupedUser {
-                libraryUserList(community: community.name, selection: $userSelection)
+                libraryUserList(community: community, selection: $userSelection)
             } else {
-                // TODO: library view for each community
-                Text("Gomen!")
+                libraryView(community: community)
             }
-        } else if let feed = appState.communityFeeds.flatMap(\.1).first(where: { $0.id == id }) {
+        } else if case .feed = selection,
+                  let feed = appState.feeds.first(where: { $0.destination == selection! })
+        {
             if showingGroupedUser {
                 feedUserList(feed: feed, selection: $userSelection)
             } else {
@@ -110,81 +111,85 @@ struct ContentView: View {
     }
     
     @ViewBuilder
-    private func thirdDestination(id: String?) -> some View {
-        if let community = appState.metadata?.communities.first(where: { $0.id == id }) {
-            libraryUserView(community: community.name, selection: userSelection)
-        } else if let feed = appState.communityFeeds.flatMap(\.1).first(where: { $0.id == id }) {
+    private func thirdDestination(for selection: SidebarDestination?) -> some View {
+        if case .community(let community) = selection {
+            libraryUserView(community: community, selection: userSelection)
+        } else if case .feed = selection,
+                  let feed = appState.feeds.first(where: { $0.destination == selection! })
+        {
             feedUserView(feed: feed, selection: userSelection)
         } else {
             Text("Select a user")
         }
     }
         
-    private func libraryUserList(community: String, selection: Binding<UserWithRecent?>) -> some View {
-        UserList(id: community, selection: selection) { page in
+    private func libraryView(community: String) -> some View {
+        PostGrid(id: .library(community), orderByWork: true) { page in
+            do {
+                return try await fetchCommunityWorks(community: community, page: page)
+            } catch {
+                print(error)
+                return .empty
+            }
+        }
+    }
+    
+    private func libraryUserList(community: String, selection: Binding<User.ID?>) -> some View {
+        UserList(id: .library(community), selection: selection) { page in
             do {
                 return try await fetchArchivedUsers(community: community, page: page)
             } catch {
                 print(error)
-                return Pagination(items: [], page: 0, pageSize: 0, totalItems: 0, totalPages: 0)
+                return .empty
             }
         }
     }
     
     @ViewBuilder
-    private func libraryUserView(community: String, selection: UserWithRecent?) -> some View {
-        if let userID = selection?.user.userId {
-            PostGrid(id: community + userID) { image in
-                LocalImageView(image: image)
-            } loadMedia: { page in
+    private func libraryUserView(community: String, selection: User.ID?) -> some View {
+        if let userID = selection {
+            PostGrid(id: .libraryByUser(userID)) { page in
                 do {
-                    let result = try await fetchArchivedUserPosts(community: community, userID: userID, page: page)
-                    return result.asLocalImage
+                    return try await fetchArchivedUserPosts(community: community, userID: userID.userId, page: page)
                 } catch {
                     print(error)
-                    return Pagination(items: [], page: 0, pageSize: 0, totalItems: 0, totalPages: 0)
+                    return .empty
                 }
             }
         }
     }
     
     private func feedView(feed: Feed) -> some View {
-        PostGrid(id: feed.id) { media in
-            MediaView(media: media)
-        } loadMedia: { page in
+        PostGrid(id: .feed(feed.id)) { page in
             do {
-                let result = try await fetchPosts(community: feed.community, feedID: feed.feedId, page: page)
-                return result.asPostMedia
+                return try await fetchPosts(community: feed.community, feedID: feed.feedId, page: page)
             } catch {
                 print(error)
-                return Pagination(items: [], page: 0, pageSize: 0, totalItems: 0, totalPages: 0)
+                return .empty
             }
         }
     }
     
-    private func feedUserList(feed: Feed, selection: Binding<UserWithRecent?>) -> some View {
-        UserList(id: feed.id, selection: selection) { page in
+    private func feedUserList(feed: Feed, selection: Binding<User.ID?>) -> some View {
+        UserList(id: .feed(feed.id), selection: selection) { page in
             do {
                 return try await fetchFeedUsers(community: feed.community, feedID: feed.feedId, page: page)
             } catch {
                 print(error)
-                return Pagination(items: [], page: 0, pageSize: 0, totalItems: 0, totalPages: 0)
+                return .empty
             }
         }
     }
     
     @ViewBuilder
-    private func feedUserView(feed: Feed, selection: UserWithRecent?) -> some View {
-        if let userID = selection?.user.userId {
-            PostGrid(id: feed.id + userID) { media in
-                MediaView(media: media)
-            } loadMedia: { page in
+    private func feedUserView(feed: Feed, selection: User.ID?) -> some View {
+        if let userID = selection {
+            PostGrid(id: .feedByUser(feed.id, userID)) { page in
                 do {
-                    let result = try await fetchFeedUserPosts(community: feed.community, feedID: feed.feedId, userID: userID, page: page)
-                    return result.asPostMedia
+                    return try await fetchFeedUserPosts(community: feed.community, feedID: feed.feedId, userID: userID.userId, page: page)
                 } catch {
                     print(error)
-                    return Pagination(items: [], page: 0, pageSize: 0, totalItems: 0, totalPages: 0)
+                    return .empty
                 }
             }
         }
@@ -192,13 +197,13 @@ struct ContentView: View {
     
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
-        ToolbarItem {
+        ToolbarItem(placement: .navigation) {
             Toggle(isOn: $showingGroupedUser) {
                 Label("Show users", systemImage: "person.2")
             }
             .toggleStyle(.button)
         }
-        ToolbarItem {
+        ToolbarItem(placement: .automatic) {
             Button {
                 showingSetting = true
             } label: {

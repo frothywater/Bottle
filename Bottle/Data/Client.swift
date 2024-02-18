@@ -1,5 +1,5 @@
 //
-//  API.swift
+//  Client.swift
 //  Bottle
 //
 //  Created by Cobalt on 9/8/23.
@@ -28,17 +28,22 @@ func fetchFeeds(communityNames: [String]) async throws -> [Feed] {
     }
 }
 
-func fetchPosts(community: String, feedID: Int, page: Int = 0) async throws -> Pagination<Post> {
+func fetchPosts(community: String, feedID: Int, page: Int = 0) async throws -> GeneralResponse {
     let data = try await call(path: "/\(community)/feed/\(feedID)/posts?page=\(page)&page_size=\(defaultPageSize)")
     return try decode(data)
 }
 
-func fetchWorks(page: Int = 0) async throws -> Pagination<Work> {
+func fetchCommunityWorks(community: String, page: Int = 0) async throws -> GeneralResponse {
+    let data = try await call(path: "/\(community)/works?page=\(page)&page_size=\(defaultPageSize)")
+    return try decode(data)
+}
+
+func fetchWorks(page: Int = 0) async throws -> GeneralResponse {
     let data = try await call(path: "/works?page=\(page)&page_size=\(defaultPageSize)")
     return try decode(data)
 }
 
-func addWork(community: String, postID: String, page: Int?) async throws -> Work {
+func addWork(community: String, postID: String, page: Int?) async throws -> GeneralResponse {
     let path = "/\(community)/post/\(postID)/work" + (page.map { "?page=\($0)" } ?? "")
     let data = try await call(.post, path: path)
     return try decode(data)
@@ -48,22 +53,22 @@ func deleteWork(workID: Int) async throws {
     _ = try await call(.delete, path: "/work/\(workID)")
 }
 
-func fetchFeedUsers(community: String, feedID: Int, page: Int = 0) async throws -> Pagination<UserWithRecent> {
+func fetchFeedUsers(community: String, feedID: Int, page: Int = 0) async throws -> GeneralResponse {
     let data = try await call(path: "/\(community)/feed/\(feedID)/users?page=\(page)&page_size=30&recent_count=5")
     return try decode(data)
 }
 
-func fetchFeedUserPosts(community: String, feedID: Int, userID: String, page: Int = 0) async throws -> UserPostPagination {
+func fetchFeedUserPosts(community: String, feedID: Int, userID: String, page: Int = 0) async throws -> GeneralResponse {
     let data = try await call(path: "/\(community)/feed/\(feedID)/user/\(userID)?page=\(page)&page_size=\(defaultPageSize)")
     return try decode(data)
 }
 
-func fetchArchivedUsers(community: String, page: Int = 0) async throws -> Pagination<UserWithRecent> {
+func fetchArchivedUsers(community: String, page: Int = 0) async throws -> GeneralResponse {
     let data = try await call(path: "/\(community)/work/users?page=\(page)&page_size=30&recent_count=5")
     return try decode(data)
 }
 
-func fetchArchivedUserPosts(community: String, userID: String, page: Int = 0) async throws -> UserPostPagination {
+func fetchArchivedUserPosts(community: String, userID: String, page: Int = 0) async throws -> GeneralResponse {
     let data = try await call(path: "/\(community)/work/user/\(userID)?page=\(page)&page_size=\(defaultPageSize)")
     return try decode(data)
 }
