@@ -9,6 +9,8 @@ import CoreTransferable
 import Foundation
 import Nuke
 
+// MARK: - Entities
+
 struct AppMetadata: Decodable {
     let communities: [CommunityMetadata]
 }
@@ -109,18 +111,54 @@ struct LibraryImage: Decodable, Identifiable {
     let size: Int?
 }
 
-struct GeneralResponse: Decodable {
+// MARK: - Response
+
+protocol EntityContainer {
+    var posts: [Post]? { get }
+    var media: [Media]? { get }
+    var users: [User]? { get }
+    var works: [Work]? { get }
+    var images: [LibraryImage]? { get }
+}
+
+protocol PaginatedResponse {
+    var totalItems: Int { get }
+    var page: Int { get }
+    var pageSize: Int { get }
+}
+
+protocol IndefiniteResponse {
+    var reachedEnd: Bool { get }
+    var nextOffset: String? { get }
+}
+
+struct GeneralResponse: EntityContainer, PaginatedResponse, Decodable  {
     let posts: [Post]?
     let media: [Media]?
     let users: [User]?
     let works: [Work]?
     let images: [LibraryImage]?
-    let userPostCounts: [String: Int]?
+
     let totalItems: Int
     let page: Int
     let pageSize: Int
 
-    static let empty = GeneralResponse(posts: nil, media: nil, users: nil, works: nil, images: nil, userPostCounts: nil, totalItems: 0, page: 0, pageSize: 0)
+    static let empty = GeneralResponse(posts: nil, media: nil, users: nil, works: nil, images: nil,
+                                       totalItems: 0, page: 0, pageSize: 0)
+}
+
+struct EndpointResponse: EntityContainer, IndefiniteResponse, Decodable {
+    let posts: [Post]?
+    let media: [Media]?
+    let users: [User]?
+    let works: [Work]?
+    let images: [LibraryImage]?
+
+    let reachedEnd: Bool
+    let nextOffset: String?
+
+    static let empty = EndpointResponse(posts: nil, media: nil, users: nil, works: nil, images: nil,
+                                        reachedEnd: false, nextOffset: nil)
 }
 
 // MARK: - Scheme
@@ -188,7 +226,7 @@ extension Feed: Identifiable {
         let community: String
         let name: String
     }
-    
+
     var id: FeedID { .init(community: community, name: name) }
 }
 

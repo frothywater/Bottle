@@ -8,18 +8,15 @@
 import NukeUI
 import SwiftUI
 
-struct UserList: View {
+struct UserList<VM: UserAggregate & ContentLoader & ObservableObject>: View {
     let id: ID
     @Binding var selection: User.ID?
-    let loadUsers: (_ page: Int) async throws -> GeneralResponse
+    @StateObject var model: VM
 
-    @StateObject private var model = UserViewModel()
-    @State private var loading = false
-
-    init(id: ID, selection: Binding<User.ID?>, loadUsers: @escaping (_: Int) async -> GeneralResponse) {
+    init(id: ID, selection: Binding<User.ID?>, model: VM) {
         self.id = id
-        self._selection = selection
-        self.loadUsers = loadUsers
+        _selection = selection
+        _model = .init(wrappedValue: model)
     }
 
     var body: some View {
@@ -29,42 +26,22 @@ struct UserList: View {
                     if let (user, mediaImages) = model.entities(for: userID) {
                         UserRecentRow(user: user, mediaImages: mediaImages)
                             .task {
-                                if index == model.userIDs.count - 1 { await load() }
+                                if index == model.userIDs.count - 1 { await model.load() }
                             }
                     }
                 }
             } else {
-                Color.clear.task(id: id) { await load() }
+                Color.clear.task(id: id) { await model.load() }
             }
         }
         .listStyle(.plain)
         .contentMargins(.bottom, 30)
         .scrollContentBackground(.hidden)
-        .overlay(alignment: .bottom) { StatusBar(message: statusMessage) }
-        .onChange(of: self.id) { reset() }
-    }
-
-    var statusMessage: String { "\(model.page)/\(model.totalPages ?? 0) pages, \(model.totalItems ?? 0) users in total" }
-
-    private func load() async {
-        if model.finishedLoading { return }
-        defer {
-            loading = false
-        }
-        do {
-            print("Loading UserList \(id)")
-            loading = true
-            let response = try await loadUsers(model.page)
-            model.update(response)
-        } catch {
-            print(error)
-        }
-    }
-
-    private func reset() {
-        print("Reset UserList \(id)")
-        loading = false
-        model.reset()
+        .overlay(alignment: .bottom) { StatusBar(message: model.message) }
+        .onChange(of: self.id) { model.reset() }
+        #if os(iOS)
+            .toolbar(.hidden)
+        #endif
     }
 }
 

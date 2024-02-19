@@ -11,7 +11,7 @@ import SwiftUI
 @MainActor
 struct MediaView: View {
     let mediaID: Media.ID
-    let model: MediaViewModel
+    let model: MediaAggregate
     let user: User?
     let post: Post?
     let media: Media
@@ -72,13 +72,16 @@ private struct ImageSheet: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .contentShape(Rectangle())
         .onTapGesture { dismiss() }
+        #if os(iOS)
+        .toolbar(.hidden)
+        #endif
     }
 }
 
 private struct ImportButton: View {
     let media: Media
     let work: Work?
-    let model: MediaViewModel
+    let model: MediaAggregate
     @State var operating = false
 
     private var imported: Bool { work != nil }
@@ -117,7 +120,8 @@ private struct ImportButton: View {
                     model.deleteWork(workID, for: media.id)
                 } else {
                     let response = try await addWork(community: media.community, postID: media.postId, page: media.pageIndex)
-                    model.update(response)
+                    model.updateEntities(response)
+                    model.updateMedia(response)
                 }
             } catch {
                 print(error)

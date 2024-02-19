@@ -124,74 +124,44 @@ struct ContentView: View {
     }
         
     private func libraryView(community: String) -> some View {
-        PostGrid(id: .library(community), orderByWork: true) { page in
-            do {
-                return try await fetchCommunityWorks(community: community, page: page)
-            } catch {
-                print(error)
-                return .empty
-            }
-        }
+        PostGrid(id: .library(community), model: PaginatedMediaViewModel(orderByWork: true) { page in
+            try await fetchCommunityWorks(community: community, page: page)
+        })
     }
     
     private func libraryUserList(community: String, selection: Binding<User.ID?>) -> some View {
-        UserList(id: .library(community), selection: selection) { page in
-            do {
-                return try await fetchArchivedUsers(community: community, page: page)
-            } catch {
-                print(error)
-                return .empty
-            }
-        }
+        UserList(id: .library(community), selection: selection, model: PaginatedUserViewModel { page in
+            try await fetchArchivedUsers(community: community, page: page)
+        })
     }
     
     @ViewBuilder
     private func libraryUserView(community: String, selection: User.ID?) -> some View {
         if let userID = selection {
-            PostGrid(id: .libraryByUser(userID)) { page in
-                do {
-                    return try await fetchArchivedUserPosts(community: community, userID: userID.userId, page: page)
-                } catch {
-                    print(error)
-                    return .empty
-                }
-            }
+            PostGrid(id: .libraryByUser(userID), model: PaginatedMediaViewModel(orderByWork: true) { page in
+                try await fetchArchivedUserPosts(community: community, userID: userID.userId, page: page)
+            })
         }
     }
     
     private func feedView(feed: Feed) -> some View {
-        PostGrid(id: .feed(feed.id)) { page in
-            do {
-                return try await fetchPosts(community: feed.community, feedID: feed.feedId, page: page)
-            } catch {
-                print(error)
-                return .empty
-            }
-        }
+        PostGrid(id: .feed(feed.id), model: PaginatedMediaViewModel { page in
+            try await fetchPosts(community: feed.community, feedID: feed.feedId, page: page)
+        })
     }
     
     private func feedUserList(feed: Feed, selection: Binding<User.ID?>) -> some View {
-        UserList(id: .feed(feed.id), selection: selection) { page in
-            do {
-                return try await fetchFeedUsers(community: feed.community, feedID: feed.feedId, page: page)
-            } catch {
-                print(error)
-                return .empty
-            }
-        }
+        UserList(id: .feed(feed.id), selection: selection, model: PaginatedUserViewModel { page in
+            try await fetchFeedUsers(community: feed.community, feedID: feed.feedId, page: page)
+        })
     }
     
     @ViewBuilder
     private func feedUserView(feed: Feed, selection: User.ID?) -> some View {
         if let userID = selection {
-            PostGrid(id: .feedByUser(feed.id, userID)) { page in
-                do {
-                    return try await fetchFeedUserPosts(community: feed.community, feedID: feed.feedId, userID: userID.userId, page: page)
-                } catch {
-                    print(error)
-                    return .empty
-                }
-            }
+            PostGrid(id: .feedByUser(feed.id, userID), model: PaginatedMediaViewModel { page in
+                try await fetchFeedUserPosts(community: feed.community, feedID: feed.feedId, userID: userID.userId, page: page)
+            })
         }
     }
     

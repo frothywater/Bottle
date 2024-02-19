@@ -7,43 +7,25 @@
 
 import Foundation
 
-class ViewModel: ObservableObject {
-    var userDict = [User.ID: User]()
-    var postDict = [Post.ID: Post]()
-    var mediaDict = [Media.ID: Media]()
-    var workDict = [Work.ID: Work]()
-    var imageDict = [LibraryImage.ID: LibraryImage]()
+// MARK: - Aggregate
 
-    var postMedia = [Post.ID: [Media.ID]]()
-    var workImages = [Work.ID: [LibraryImage.ID]]()
+protocol EntityAggregate: AnyObject {
+    // The dictionary of entities
+    var userDict: [User.ID: User] { get set }
+    var postDict: [Post.ID: Post] { get set }
+    var mediaDict: [Media.ID: Media] { get set }
+    var workDict: [Work.ID: Work] { get set }
+    var imageDict: [LibraryImage.ID: LibraryImage] { get set }
+
+    // The dictionary of relationships
+    var postMedia: [Post.ID: [Media.ID]] { get set }
+    var workImages: [Work.ID: [LibraryImage.ID]] { get set }
     /// Currently only support single-image works
-    var pageWork = [PageID: Work.ID]()
+    var pageWork: [PageID: Work.ID] { get set }
+}
 
-    @Published var page = 0
-    @Published var pageSize: Int?
-    @Published var totalItems: Int?
-
-    var totalPages: Int? {
-        if let totalItems = totalItems, let pageSize = pageSize, pageSize > 0 {
-            return (totalItems + pageSize - 1) / pageSize
-        }
-        return nil
-    }
-
-    var startedLoading: Bool { totalItems != nil }
-
-    var finishedLoading: Bool {
-        if let totalPages = totalPages, page == totalPages { return true }
-        return false
-    }
-
-    func update(_ response: GeneralResponse) {
-        page = response.page + 1
-        if !startedLoading {
-            pageSize = response.pageSize
-            totalItems = response.totalItems
-        }
-
+extension EntityAggregate {
+    func updateEntities(_ response: EntityContainer) {
         userDict.merge(response.users)
         postDict.merge(response.posts)
         mediaDict.merge(response.media)
@@ -61,7 +43,7 @@ class ViewModel: ObservableObject {
         }
     }
 
-    func reset() {
+    func resetEntities() {
         userDict = [:]
         postDict = [:]
         mediaDict = [:]
@@ -69,9 +51,7 @@ class ViewModel: ObservableObject {
         imageDict = [:]
         postMedia = [:]
         workImages = [:]
-        page = 0
-        pageSize = nil
-        totalItems = nil
+        pageWork = [:]
     }
 
     func workImage(for mediaID: Media.ID) -> (Work?, LibraryImage?) {
@@ -85,22 +65,14 @@ class ViewModel: ObservableObject {
     }
 }
 
-class MediaViewModel: ViewModel {
-    let orderByWork: Bool
-    @Published var mediaIDs = [Media.ID]()
-    var postWorks = [Post.ID: [Work.ID]]()
-    var pageMedia = [PageID: Media.ID]()
-    
-    init(orderByWork: Bool) {
-        self.orderByWork = orderByWork
-    }
+protocol MediaAggregate: EntityAggregate {
+    var orderByWork: Bool { get }
+    var mediaIDs: [Media.ID] { get set }
+    var pageMedia: [PageID: Media.ID] { get set }
+}
 
-    override func update(_ response: GeneralResponse) {
-        super.update(response)
-        
-        // Map post to works
-        postWorks.merge(response.works?.map { ($0.postID, $0.id) })
-
+extension MediaAggregate {
+    func updateMedia(_ response: EntityContainer) {
         if orderByWork {
             // Map page to media
             for media in response.media ?? [] {
@@ -117,10 +89,8 @@ class MediaViewModel: ViewModel {
         }
     }
 
-    override func reset() {
-        super.reset()
+    func resetMedia() {
         mediaIDs = []
-        postWorks = [:]
         pageMedia = [:]
     }
 
@@ -138,25 +108,22 @@ class MediaViewModel: ViewModel {
         workImages[workID]?.removeAll()
         workDict.removeValue(forKey: workID)
         pageWork.removeValue(forKey: media.pageID)
-        postWorks[media.postID]?.removeAll { $0 == workID }
     }
 }
 
-class UserViewModel: ViewModel {
-    @Published var userIDs = [User.ID]()
-    var userPosts = [User.ID: [Post.ID]]()
+protocol UserAggregate: EntityAggregate {
+    var userIDs: [User.ID] { get set }
+    var userPosts: [User.ID: [Post.ID]] { get set }
+}
 
-    override func update(_ response: GeneralResponse) {
-        super.update(response)
-        
+extension UserAggregate {
+    func updateUser(_ response: GeneralResponse) {
         // Map user to posts
         userPosts.merge(response.posts?.map { ($0.userID, $0.id) })
-        
         userIDs.append(contentsOf: response.users?.map(\.id) ?? [])
     }
-    
-    override func reset() {
-        super.reset()
+
+    func resetUser() {
         userIDs = []
         userPosts = [:]
     }
@@ -171,5 +138,185 @@ class UserViewModel: ViewModel {
             return (media, image)
         }
         return (user, mediaImages)
+    }
+}
+
+// MARK: - Loading
+
+protocol ContentLoader: AnyObject {
+    associatedtype Request
+    associatedtype Response: EntityContainer
+    var nextRequest: Request { get }
+    var fetch: (_: Request) async throws -> Response { get }
+
+    var startedLoading: Bool { get }
+    var finishedLoading: Bool { get }
+    var loading: Bool { get set }
+    var message: String { get }
+
+    func update(_ response: Response)
+    func reset()
+}
+
+extension ContentLoader {
+    func load() async {
+        if finishedLoading { return }
+        defer {
+            loading = false
+        }
+        do {
+            loading = true
+            let response = try await fetch(nextRequest)
+            update(response)
+        } catch {
+            print(error)
+        }
+    }
+}
+
+protocol PaginatedLoader: ContentLoader {
+    var page: Int { get set }
+    var pageSize: Int? { get set }
+    var totalItems: Int? { get set }
+}
+
+extension PaginatedLoader {
+    var nextRequest: Int { page }
+
+    var totalPages: Int? {
+        if let totalItems = totalItems, let pageSize = pageSize, pageSize > 0 {
+            return (totalItems + pageSize - 1) / pageSize
+        }
+        return nil
+    }
+
+    var startedLoading: Bool { totalItems != nil }
+
+    var finishedLoading: Bool {
+        if let totalPages = totalPages, page == totalPages { return true }
+        return false
+    }
+
+    var message: String { "\(page)/\(totalPages ?? 0) pages, \(totalItems ?? 0) items in total" }
+
+    func updateLoader(_ response: PaginatedResponse) {
+        page = response.page + 1
+        if !startedLoading {
+            pageSize = response.pageSize
+            totalItems = response.totalItems
+        }
+    }
+
+    func resetLoader() {
+        page = 0
+        pageSize = nil
+        totalItems = nil
+        loading = false
+    }
+}
+
+protocol IndefiniteLoader: ContentLoader {
+    var startedLoading: Bool { get set }
+    var reachedEnd: Bool { get set }
+    var nextOffset: String? { get set }
+}
+
+extension IndefiniteLoader {
+    var nextRequest: String? { nextOffset }
+
+    var finishedLoading: Bool { reachedEnd }
+
+    var message: String { reachedEnd ? "No more items" : "More items" }
+
+    func updateLoader(_ response: IndefiniteResponse) {
+        startedLoading = true
+        reachedEnd = response.reachedEnd
+        nextOffset = response.nextOffset
+    }
+
+    func resetLoader() {
+        reachedEnd = false
+        nextOffset = nil
+        loading = false
+    }
+}
+
+// MARK: - View model
+
+class PaginatedMediaViewModel: MediaAggregate, PaginatedLoader, ObservableObject {
+    let orderByWork: Bool
+    let fetch: (_: Int) async throws -> GeneralResponse
+
+    var userDict = [User.ID: User]()
+    var postDict = [Post.ID: Post]()
+    var mediaDict = [Media.ID: Media]()
+    var workDict = [Work.ID: Work]()
+    var imageDict = [LibraryImage.ID: LibraryImage]()
+
+    var postMedia = [Post.ID: [Media.ID]]()
+    var workImages = [Work.ID: [LibraryImage.ID]]()
+    var pageMedia = [PageID: Media.ID]()
+
+    @Published var mediaIDs = [Media.ID]()
+    @Published var pageWork = [PageID: Work.ID]()
+
+    @Published var page = 0
+    @Published var pageSize: Int?
+    @Published var totalItems: Int?
+    @Published var loading = false
+
+    init(orderByWork: Bool = false, fetch: @escaping (_: Int) async throws -> GeneralResponse) {
+        self.orderByWork = orderByWork
+        self.fetch = fetch
+    }
+
+    func update(_ response: GeneralResponse) {
+        updateEntities(response)
+        updateMedia(response)
+        updateLoader(response)
+    }
+
+    func reset() {
+        resetEntities()
+        resetMedia()
+        resetLoader()
+    }
+}
+
+class PaginatedUserViewModel: UserAggregate, PaginatedLoader, ObservableObject {
+    let fetch: (_: Int) async throws -> GeneralResponse
+
+    var userDict = [User.ID: User]()
+    var postDict = [Post.ID: Post]()
+    var mediaDict = [Media.ID: Media]()
+    var workDict = [Work.ID: Work]()
+    var imageDict = [LibraryImage.ID: LibraryImage]()
+
+    var postMedia = [Post.ID: [Media.ID]]()
+    var workImages = [Work.ID: [LibraryImage.ID]]()
+    var userPosts = [User.ID: [Post.ID]]()
+
+    @Published var userIDs = [User.ID]()
+    @Published var pageWork = [PageID: Work.ID]()
+
+    @Published var page = 0
+    @Published var pageSize: Int?
+    @Published var totalItems: Int?
+    @Published var loading = false
+
+    init(fetch: @escaping (_: Int) async throws -> GeneralResponse) {
+        self.fetch = fetch
+    }
+
+    func update(_ response: GeneralResponse) {
+        updateEntities(response)
+        updateUser(response)
+        updateLoader(response)
+    }
+
+    func reset() {
+        resetEntities()
+        resetUser()
+        resetLoader()
     }
 }
