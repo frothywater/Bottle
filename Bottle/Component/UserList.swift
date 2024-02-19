@@ -9,15 +9,8 @@ import NukeUI
 import SwiftUI
 
 struct UserList<VM: UserAggregate & ContentLoader & ObservableObject>: View {
-    let id: ID
     @Binding var selection: User.ID?
     @StateObject var model: VM
-
-    init(id: ID, selection: Binding<User.ID?>, model: VM) {
-        self.id = id
-        _selection = selection
-        _model = .init(wrappedValue: model)
-    }
 
     var body: some View {
         List(selection: $selection) {
@@ -31,14 +24,13 @@ struct UserList<VM: UserAggregate & ContentLoader & ObservableObject>: View {
                     }
                 }
             } else {
-                Color.clear.task(id: id) { await model.load() }
+                Color.clear.task { await model.load() }
             }
         }
         .listStyle(.plain)
         .contentMargins(.bottom, 30)
         .scrollContentBackground(.hidden)
         .overlay(alignment: .bottom) { StatusBar(message: model.message) }
-        .onChange(of: self.id) { model.reset() }
         #if os(iOS)
             .toolbar(.hidden)
         #endif
@@ -115,9 +107,7 @@ private struct UserRecentRow: View {
 
 // MARK: - ID
 
-extension UserList {
-    enum ID: Equatable {
-        case library(String)
-        case feed(Feed.ID)
-    }
+enum UserListID: Hashable {
+    case library(String)
+    case feed(Feed.ID)
 }

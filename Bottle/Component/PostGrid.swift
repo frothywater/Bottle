@@ -8,9 +8,8 @@
 import SwiftUI
 
 struct PostGrid<VM: MediaAggregate & ContentLoader & ObservableObject>: View {
-    let id: ID
     @StateObject var model: VM
-    
+
     @State private var columnCount = 3.0
     private var columns: [GridItem] { Array(repeating: GridItem(.flexible()), count: lround(columnCount)) }
 
@@ -28,27 +27,24 @@ struct PostGrid<VM: MediaAggregate & ContentLoader & ObservableObject>: View {
                         }
                     }
                 } else {
-                    Color.clear.task(id: id) { await model.load() }
+                    Color.clear.task { await model.load() }
                 }
             }
             .padding(5)
         }
         .contentMargins(.bottom, 30)
         .overlay(alignment: .bottom) { StatusBar(message: model.message, columnCount: $columnCount) }
-        .onChange(of: self.id) { model.reset() }
         #if os(iOS)
-        .toolbar(.hidden)
+            .toolbar(.hidden)
         #endif
     }
 }
 
 // MARK: - ID
 
-extension PostGrid {
-    enum ID: Equatable {
-        case library(String)
-        case libraryByUser(User.ID)
-        case feed(Feed.ID)
-        case feedByUser(Feed.ID, User.ID)
-    }
+enum PostGridID: Hashable {
+    case library(String)
+    case libraryByUser(User.ID)
+    case feed(Feed.ID)
+    case feedByUser(Feed.ID, User.ID)
 }

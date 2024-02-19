@@ -142,9 +142,6 @@ struct GeneralResponse: EntityContainer, PaginatedResponse, Decodable  {
     let totalItems: Int
     let page: Int
     let pageSize: Int
-
-    static let empty = GeneralResponse(posts: nil, media: nil, users: nil, works: nil, images: nil,
-                                       totalItems: 0, page: 0, pageSize: 0)
 }
 
 struct EndpointResponse: EntityContainer, IndefiniteResponse, Decodable {
@@ -156,9 +153,6 @@ struct EndpointResponse: EntityContainer, IndefiniteResponse, Decodable {
 
     let reachedEnd: Bool
     let nextOffset: String?
-
-    static let empty = EndpointResponse(posts: nil, media: nil, users: nil, works: nil, images: nil,
-                                        reachedEnd: false, nextOffset: nil)
 }
 
 // MARK: - Scheme

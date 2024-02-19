@@ -43,17 +43,6 @@ extension EntityAggregate {
         }
     }
 
-    func resetEntities() {
-        userDict = [:]
-        postDict = [:]
-        mediaDict = [:]
-        workDict = [:]
-        imageDict = [:]
-        postMedia = [:]
-        workImages = [:]
-        pageWork = [:]
-    }
-
     func workImage(for mediaID: Media.ID) -> (Work?, LibraryImage?) {
         guard let media = mediaDict[mediaID] else { return (nil, nil) }
         let workID = pageWork[media.pageID]
@@ -89,11 +78,6 @@ extension MediaAggregate {
         }
     }
 
-    func resetMedia() {
-        mediaIDs = []
-        pageMedia = [:]
-    }
-
     func entities(for mediaID: Media.ID) -> (User?, Post?, Media, Work?, LibraryImage?)? {
         guard let media = mediaDict[mediaID] else { return nil }
         let post = postDict[media.postID]
@@ -123,11 +107,6 @@ extension UserAggregate {
         userIDs.append(contentsOf: response.users?.map(\.id) ?? [])
     }
 
-    func resetUser() {
-        userIDs = []
-        userPosts = [:]
-    }
-
     func entities(for userID: User.ID) -> (User, [(Media, LibraryImage?)])? {
         guard let user = userDict[userID] else { return nil }
         let postIDs = userPosts.at(userID) ?? []
@@ -155,21 +134,21 @@ protocol ContentLoader: AnyObject {
     var message: String { get }
 
     func update(_ response: Response)
-    func reset()
 }
 
 extension ContentLoader {
     func load() async {
         if finishedLoading { return }
-        defer {
-            loading = false
-        }
         do {
-            loading = true
+            await MainActor.run { loading = true }
             let response = try await fetch(nextRequest)
-            update(response)
+            await MainActor.run {
+                update(response)
+                loading = false
+            }
         } catch {
             print(error)
+            await MainActor.run { loading = false }
         }
     }
 }
@@ -206,13 +185,6 @@ extension PaginatedLoader {
             totalItems = response.totalItems
         }
     }
-
-    func resetLoader() {
-        page = 0
-        pageSize = nil
-        totalItems = nil
-        loading = false
-    }
 }
 
 protocol IndefiniteLoader: ContentLoader {
@@ -232,12 +204,6 @@ extension IndefiniteLoader {
         startedLoading = true
         reachedEnd = response.reachedEnd
         nextOffset = response.nextOffset
-    }
-
-    func resetLoader() {
-        reachedEnd = false
-        nextOffset = nil
-        loading = false
     }
 }
 
@@ -275,12 +241,6 @@ class PaginatedMediaViewModel: MediaAggregate, PaginatedLoader, ObservableObject
         updateMedia(response)
         updateLoader(response)
     }
-
-    func reset() {
-        resetEntities()
-        resetMedia()
-        resetLoader()
-    }
 }
 
 class PaginatedUserViewModel: UserAggregate, PaginatedLoader, ObservableObject {
@@ -312,11 +272,5 @@ class PaginatedUserViewModel: UserAggregate, PaginatedLoader, ObservableObject {
         updateEntities(response)
         updateUser(response)
         updateLoader(response)
-    }
-
-    func reset() {
-        resetEntities()
-        resetUser()
-        resetLoader()
     }
 }
