@@ -73,6 +73,11 @@ func fetchArchivedUserPosts(community: String, userID: String, page: Int = 0) as
     return try decode(data)
 }
 
+func fetchTemporaryFeed(community: String, request: EndpointRequest) async throws -> EndpointResponse {
+    let data = try await call(.post, path: "/\(community)/api", body: request)
+    return try decode(data)
+}
+
 // MARK: - Helper
 
 func getServerURL() -> String? {
@@ -85,12 +90,19 @@ private enum HTTPMethod: String {
     case delete = "DELETE"
 }
 
-private func call(_ method: HTTPMethod = .get, path: String) async throws -> Data {
+private func call(_ method: HTTPMethod = .get, path: String, body: Encodable? = nil) async throws -> Data {
     guard let baseURL = getServerURL() else {
         throw AppError.invalidServer
     }
     var request = URLRequest(url: URL(string: baseURL + path)!)
     request.httpMethod = method.rawValue
+    if let body = body {
+        let encoder = JSONEncoder()
+        encoder.keyEncodingStrategy = .convertToSnakeCase
+        request.httpBody = try encoder.encode(body)
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        print(String(data: request.httpBody!, encoding: .utf8)!)
+    }
     let (data, response) = try await URLSession.shared.data(for: request)
     guard let httpResponse = response as? HTTPURLResponse,
           (200 ... 299).contains(httpResponse.statusCode)

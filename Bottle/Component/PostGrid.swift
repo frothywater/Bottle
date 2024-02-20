@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct PostGrid<VM: MediaAggregate & ContentLoader & ObservableObject>: View {
+struct PostGrid<VM: MediaProvider & ContentLoader & ObservableObject>: View {
     @StateObject var model: VM
 
     @State private var columnCount = 3.0
@@ -47,4 +47,5 @@ enum PostGridID: Hashable {
     case libraryByUser(User.ID)
     case feed(Feed.ID)
     case feedByUser(Feed.ID, User.ID)
+    case temporaryUser(User.ID)
 }

@@ -5,9 +5,7 @@
 //  Created by Cobalt on 9/8/23.
 //
 
-import CoreTransferable
 import Foundation
-import Nuke
 
 // MARK: - Entities
 
@@ -57,7 +55,7 @@ struct Post: Decodable {
     let text: String
     let thumbnailUrl: String?
     let createdDate: Date
-    let addedDate: Date
+    let addedDate: Date?
 }
 
 struct User: Decodable {

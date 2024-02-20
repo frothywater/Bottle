@@ -9,7 +9,7 @@ import Foundation
 
 // MARK: - Aggregate
 
-protocol EntityAggregate: AnyObject {
+protocol EntityProvider: AnyObject {
     // The dictionary of entities
     var userDict: [User.ID: User] { get set }
     var postDict: [Post.ID: Post] { get set }
@@ -24,7 +24,7 @@ protocol EntityAggregate: AnyObject {
     var pageWork: [PageID: Work.ID] { get set }
 }
 
-extension EntityAggregate {
+extension EntityProvider {
     func updateEntities(_ response: EntityContainer) {
         userDict.merge(response.users)
         postDict.merge(response.posts)
@@ -54,13 +54,13 @@ extension EntityAggregate {
     }
 }
 
-protocol MediaAggregate: EntityAggregate {
+protocol MediaProvider: EntityProvider {
     var orderByWork: Bool { get }
     var mediaIDs: [Media.ID] { get set }
     var pageMedia: [PageID: Media.ID] { get set }
 }
 
-extension MediaAggregate {
+extension MediaProvider {
     func updateMedia(_ response: EntityContainer) {
         if orderByWork {
             // Map page to media
@@ -95,12 +95,12 @@ extension MediaAggregate {
     }
 }
 
-protocol UserAggregate: EntityAggregate {
+protocol UserProvider: EntityProvider {
     var userIDs: [User.ID] { get set }
     var userPosts: [User.ID: [Post.ID]] { get set }
 }
 
-extension UserAggregate {
+extension UserProvider {
     func updateUser(_ response: GeneralResponse) {
         // Map user to posts
         userPosts.merge(response.posts?.map { ($0.userID, $0.id) })
@@ -209,7 +209,7 @@ extension IndefiniteLoader {
 
 // MARK: - View model
 
-class PaginatedMediaViewModel: MediaAggregate, PaginatedLoader, ObservableObject {
+class PaginatedMediaViewModel: MediaProvider, PaginatedLoader, ObservableObject {
     let orderByWork: Bool
     let fetch: (_: Int) async throws -> GeneralResponse
 
@@ -243,7 +243,7 @@ class PaginatedMediaViewModel: MediaAggregate, PaginatedLoader, ObservableObject
     }
 }
 
-class PaginatedUserViewModel: UserAggregate, PaginatedLoader, ObservableObject {
+class PaginatedUserViewModel: UserProvider, PaginatedLoader, ObservableObject {
     let fetch: (_: Int) async throws -> GeneralResponse
 
     var userDict = [User.ID: User]()
@@ -271,6 +271,40 @@ class PaginatedUserViewModel: UserAggregate, PaginatedLoader, ObservableObject {
     func update(_ response: GeneralResponse) {
         updateEntities(response)
         updateUser(response)
+        updateLoader(response)
+    }
+}
+
+class IndefiniteMediaViewModel: MediaProvider, IndefiniteLoader, ObservableObject {
+    let orderByWork: Bool
+    let fetch: (_: String?) async throws -> EndpointResponse
+
+    var userDict = [User.ID: User]()
+    var postDict = [Post.ID: Post]()
+    var mediaDict = [Media.ID: Media]()
+    var workDict = [Work.ID: Work]()
+    var imageDict = [LibraryImage.ID: LibraryImage]()
+
+    var postMedia = [Post.ID: [Media.ID]]()
+    var workImages = [Work.ID: [LibraryImage.ID]]()
+    var pageMedia = [PageID: Media.ID]()
+
+    @Published var mediaIDs = [Media.ID]()
+    @Published var pageWork = [PageID: Work.ID]()
+    
+    @Published var startedLoading = false
+    @Published var reachedEnd = false
+    @Published var loading = false
+    var nextOffset: String?
+
+    init(orderByWork: Bool = false, fetch: @escaping (_: String?) async throws -> EndpointResponse) {
+        self.orderByWork = orderByWork
+        self.fetch = fetch
+    }
+
+    func update(_ response: EndpointResponse) {
+        updateEntities(response)
+        updateMedia(response)
         updateLoader(response)
     }
 }

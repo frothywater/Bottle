@@ -11,7 +11,7 @@ import SwiftUI
 @MainActor
 struct MediaView: View {
     let mediaID: Media.ID
-    let model: MediaAggregate
+    let model: MediaProvider
     let user: User?
     let post: Post?
     let media: Media
@@ -81,7 +81,7 @@ private struct ImageSheet: View {
 private struct ImportButton: View {
     let media: Media
     let work: Work?
-    let model: MediaAggregate
+    let model: MediaProvider
     @State var operating = false
 
     private var imported: Bool { work != nil }

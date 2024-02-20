@@ -128,6 +128,7 @@ struct ContentView: View {
             try await fetchCommunityWorks(community: community, page: page)
         })
         .id(PostGridID.library(community))
+        .navigationTitle("Library: \(community.capitalized)")
     }
     
     private func libraryUserList(community: String, selection: Binding<User.ID?>) -> some View {
@@ -135,6 +136,7 @@ struct ContentView: View {
             try await fetchArchivedUsers(community: community, page: page)
         })
         .id(UserListID.library(community))
+        .navigationTitle("Artists in Library: \(community.capitalized)")
     }
     
     @ViewBuilder
@@ -144,6 +146,7 @@ struct ContentView: View {
                 try await fetchArchivedUserPosts(community: community, userID: userID.userId, page: page)
             })
             .id(PostGridID.libraryByUser(userID))
+            .navigationTitle("Works in Library: \(community.capitalized)")
         }
     }
     
@@ -152,6 +155,7 @@ struct ContentView: View {
             try await fetchPosts(community: feed.community, feedID: feed.feedId, page: page)
         })
         .id(PostGridID.feed(feed.id))
+        .navigationTitle("Feed: \(feed.name.capitalized)")
     }
     
     private func feedUserList(feed: Feed, selection: Binding<User.ID?>) -> some View {
@@ -159,6 +163,7 @@ struct ContentView: View {
             try await fetchFeedUsers(community: feed.community, feedID: feed.feedId, page: page)
         })
         .id(UserListID.feed(feed.id))
+        .navigationTitle("Users in Feed: \(feed.name.capitalized)")
     }
     
     @ViewBuilder
@@ -168,6 +173,7 @@ struct ContentView: View {
                 try await fetchFeedUserPosts(community: feed.community, feedID: feed.feedId, userID: userID.userId, page: page)
             })
             .id(PostGridID.feedByUser(feed.id, userID))
+            .navigationTitle("Posts in Feed: \(feed.name.capitalized)")
         }
     }
     

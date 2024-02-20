@@ -8,7 +8,7 @@
 import NukeUI
 import SwiftUI
 
-struct UserList<VM: UserAggregate & ContentLoader & ObservableObject>: View {
+struct UserList<VM: UserProvider & ContentLoader & ObservableObject>: View {
     @Binding var selection: User.ID?
     @StateObject var model: VM
 
@@ -49,6 +49,7 @@ private struct UserRecentRow: View {
         }
         .padding([.top, .bottom], 5)
         .fixVerticalScrolling()
+        .contextMenu { contextMenu }
     }
 
     var profile: some View {
@@ -102,6 +103,22 @@ private struct UserRecentRow: View {
         .frame(height: 100)
         .cornerRadius(5)
         .overlay { RoundedRectangle(cornerRadius: 5).stroke(.separator) }
+    }
+
+    @ViewBuilder
+    var contextMenu: some View {
+        if let params = user.feedParams {
+            NavigationLink {
+                PostGrid(model: IndefiniteMediaViewModel { offset in
+                    let request = EndpointRequest(params: params, offset: offset)
+                    return try await fetchTemporaryFeed(community: user.community, request: request)
+                })
+                .id(PostGridID.temporaryUser(user.id))
+                .navigationTitle("Posts by \(user.name ?? user.userId) at \(user.community.capitalized)")
+            } label: {
+                Label("Browse \(user.name ?? user.userId) at \(user.community.capitalized)", systemImage: "global")
+            }
+        }
     }
 }
 

@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		5110A2AD2B74DFA60043D840 /* ViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5110A2AC2B74DFA60043D840 /* ViewModel.swift */; };
 		51297BD92ABE081D0007340C /* Legacy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51297BD82ABE081D0007340C /* Legacy.swift */; };
+		5135F1442B844EA9003A6C4B /* Request.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5135F1432B844EA9003A6C4B /* Request.swift */; };
 		514D09012AAC48EE0084C4BD /* Nuke in Frameworks */ = {isa = PBXBuildFile; productRef = 514D09002AAC48EE0084C4BD /* Nuke */; };
 		514D09032AAC48EE0084C4BD /* NukeExtensions in Frameworks */ = {isa = PBXBuildFile; productRef = 514D09022AAC48EE0084C4BD /* NukeExtensions */; };
 		514D09052AAC48EE0084C4BD /* NukeUI in Frameworks */ = {isa = PBXBuildFile; productRef = 514D09042AAC48EE0084C4BD /* NukeUI */; };
@@ -53,6 +54,7 @@
 /* Begin PBXFileReference section */
 		5110A2AC2B74DFA60043D840 /* ViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewModel.swift; sourceTree = "<group>"; };
 		51297BD82ABE081D0007340C /* Legacy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Legacy.swift; sourceTree = "<group>"; };
+		5135F1432B844EA9003A6C4B /* Request.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Request.swift; sourceTree = "<group>"; };
 		515A6EFE2AAB180200AA1D43 /* Response.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Response.swift; sourceTree = "<group>"; };
 		515A6F002AAB1ED000AA1D43 /* Client.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Client.swift; sourceTree = "<group>"; };
 		515A6F022AAB4C8200AA1D43 /* Error.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Error.swift; sourceTree = "<group>"; };
@@ -131,6 +133,7 @@
 			isa = PBXGroup;
 			children = (
 				515A6EFE2AAB180200AA1D43 /* Response.swift */,
+				5135F1432B844EA9003A6C4B /* Request.swift */,
 				515A6F002AAB1ED000AA1D43 /* Client.swift */,
 				51FB0E302B412ED90065BF35 /* AppState.swift */,
 			);
@@ -348,6 +351,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				51ABF5DC2AEAB80500BCC986 /* UserList.swift in Sources */,
+				5135F1442B844EA9003A6C4B /* Request.swift in Sources */,
 				51C363482AC0908800065E53 /* Util.swift in Sources */,
 				51FF117C2B3F214D00D31336 /* Zoom.swift in Sources */,
 				51CC71192AB1B23E00A85047 /* MediaView.swift in Sources */,
