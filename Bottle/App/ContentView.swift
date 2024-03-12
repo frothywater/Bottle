@@ -142,7 +142,7 @@ struct ContentView: View {
     @ViewBuilder
     private func libraryUserView(community: String, selection: User.ID?) -> some View {
         if let userID = selection {
-            PostGrid(model: PaginatedMediaViewModel(orderByWork: true) { page in
+            PostGrid(model: PaginatedMediaViewModel { page in
                 try await fetchArchivedUserPosts(community: community, userID: userID.userId, page: page)
             })
             .id(PostGridID.libraryByUser(userID))

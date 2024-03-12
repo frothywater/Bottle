@@ -89,7 +89,7 @@ private struct UserRecentRow: View {
 
     @ViewBuilder
     func recentImage(media: Media, image: LibraryImage?) -> some View {
-        let url = if image?.path != nil { image?.localURL } else { media.thumbnailUrl }
+        let url = if image?.localSmallThumbnailURL != nil { image?.localSmallThumbnailURL } else { media.thumbnailUrl }
         LazyImage(request: url?.imageRequest) { state in
             if let image = state.image {
                 image.resizable().scaledToFit()

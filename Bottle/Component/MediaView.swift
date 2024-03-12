@@ -18,8 +18,8 @@ struct MediaView: View {
     let work: Work?
     let image: LibraryImage?
 
-    var thumbnailURL: String? { if image?.path != nil { image?.localURL } else { media.thumbnailUrl } }
-    var url: String? { if image?.path != nil { image?.localURL } else { media.url } }
+    var thumbnailURL: String? { if image?.localThumbnailURL != nil { image?.localThumbnailURL } else { media.thumbnailUrl } }
+    var url: String? { if image?.localURL != nil { image?.localURL } else { media.url } }
 
     var body: some View {
         NavigationLink {

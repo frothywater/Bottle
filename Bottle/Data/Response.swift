@@ -91,6 +91,7 @@ struct Work: Decodable, Identifiable {
     let favorite: Bool
     let rating: Int
     let thumbnailPath: String?
+    let smallThumbnailPath: String?
     let addedDate: Date
     let modifiedDate: Date
     let viewedDate: Date?
@@ -104,6 +105,7 @@ struct LibraryImage: Decodable, Identifiable {
     let remoteUrl: String?
     let path: String?
     let thumbnailPath: String?
+    let smallThumbnailPath: String?
     let width: Int?
     let height: Int?
     let size: Int?
@@ -285,7 +287,17 @@ extension LibraryImage {
 
 extension LibraryImage {
     var localURL: String? {
-        guard let baseURL = getServerURL() else { return nil }
-        return "\(baseURL)/image/\(id)"
+        guard let baseURL = getServerURL(), let path = path else { return nil }
+        return "\(baseURL)/image/\(path)"
+    }
+    
+    var localThumbnailURL: String? {
+        guard let baseURL = getServerURL(), let thumbnailPath = thumbnailPath else { return nil }
+        return "\(baseURL)/image/\(thumbnailPath)"
+    }
+    
+    var localSmallThumbnailURL: String? {
+        guard let baseURL = getServerURL(), let smallThumbnailPath = smallThumbnailPath else { return nil }
+        return "\(baseURL)/image/\(smallThumbnailPath)"
     }
 }
