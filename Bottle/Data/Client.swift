@@ -7,7 +7,7 @@
 
 import Foundation
 
-let defaultPageSize = 100
+let defaultPageSize = 30
 
 func fetchMetadata() async throws -> AppMetadata {
     let data = try await call(path: "/metadata")

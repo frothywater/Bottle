@@ -26,17 +26,6 @@ private struct ZoomableView<Content: View>: View {
         ZoomableScrollView(scale: $scale) {
             content()
         }
-        .gesture(doubleTapGesture)
-    }
-
-    private var doubleTapGesture: some Gesture {
-        TapGesture(count: 2).onEnded {
-            if scale < maxAllowedScale / 2 {
-                scale = maxAllowedScale
-            } else {
-                scale = 1.0
-            }
-        }
     }
 }
 

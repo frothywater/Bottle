@@ -89,7 +89,7 @@ private struct UserRecentRow: View {
 
     @ViewBuilder
     func recentImage(media: Media, image: LibraryImage?) -> some View {
-        let url = if image?.localSmallThumbnailURL != nil { image?.localSmallThumbnailURL } else { media.thumbnailUrl }
+        let url = image?.localSmallThumbnailURL ?? image?.localThumbnailURL ?? media.thumbnailUrl
         LazyImage(request: url?.imageRequest) { state in
             if let image = state.image {
                 image.resizable().scaledToFit()
@@ -109,11 +109,11 @@ private struct UserRecentRow: View {
     var contextMenu: some View {
         if let params = user.feedParams {
             NavigationLink {
-                PostGrid(model: IndefiniteMediaViewModel { offset in
+                MediaGrid(model: IndefiniteMediaViewModel { offset in
                     let request = EndpointRequest(params: params, offset: offset)
                     return try await fetchTemporaryFeed(community: user.community, request: request)
                 })
-                .id(PostGridID.temporaryUser(user.id))
+                .id(MediaGridID.temporaryUser(user.id))
                 .navigationTitle("Posts by \(user.name ?? user.userId) at \(user.community.capitalized)")
             } label: {
                 Label("Browse \(user.name ?? user.userId) at \(user.community.capitalized)", systemImage: "global")

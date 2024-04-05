@@ -1,13 +1,13 @@
 //
-//  PostGrid.swift
+//  MediaGrid.swift
 //  Bottle
 //
-//  Created by Cobalt on 3/27/24.
+//  Created by Cobalt on 10/26/23.
 //
 
 import SwiftUI
 
-struct PostGrid<VM: PostProvider & ContentLoader & ObservableObject>: View {
+struct MediaGrid<VM: MediaProvider & ContentLoader & ObservableObject>: View {
     @StateObject var model: VM
 
     @AppStorage("postGridColumnCount") private var columnCount = 3.0
@@ -17,12 +17,12 @@ struct PostGrid<VM: PostProvider & ContentLoader & ObservableObject>: View {
         ScrollView {
             LazyVGrid(columns: columns, spacing: 10) {
                 if model.startedLoading {
-                    ForEach(Array(model.postIDs.enumerated()), id: \.element) { index, postID in
-                        if let (user, post, work, media, images) = model.entities(for: postID) {
-                            PostView(postID: postID, model: model,
-                                     user: user, post: post, work: work, media: media, images: images)
+                    ForEach(Array(model.mediaIDs.enumerated()), id: \.element) { index, mediaID in
+                        if let (user, post, media, work, image) = model.entities(for: mediaID) {
+                            MediaView(mediaID: mediaID, model: model,
+                                      user: user, post: post, media: media, work: work, image: image)
                                 .task {
-                                    if index == model.postIDs.count - 1 { await model.load() }
+                                    if index == model.mediaIDs.count - 1 { await model.load() }
                                 }
                         }
                     }
@@ -42,7 +42,7 @@ struct PostGrid<VM: PostProvider & ContentLoader & ObservableObject>: View {
 
 // MARK: - ID
 
-enum PostGridID: Hashable {
+enum MediaGridID: Hashable {
     case library(String)
     case libraryByUser(User.ID)
     case feed(Feed.ID)

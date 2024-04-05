@@ -285,19 +285,31 @@ extension LibraryImage {
     }
 }
 
-extension LibraryImage {
-    var localURL: String? {
-        guard let baseURL = getServerURL(), let path = path else { return nil }
-        return "\(baseURL)/image/\(path)"
-    }
-    
+extension Work {
     var localThumbnailURL: String? {
         guard let baseURL = getServerURL(), let thumbnailPath = thumbnailPath else { return nil }
-        return "\(baseURL)/image/\(thumbnailPath)"
+        return "\(baseURL)/image/\(thumbnailPath.percentEncoded)"
     }
     
     var localSmallThumbnailURL: String? {
         guard let baseURL = getServerURL(), let smallThumbnailPath = smallThumbnailPath else { return nil }
-        return "\(baseURL)/image/\(smallThumbnailPath)"
+        return "\(baseURL)/image/\(smallThumbnailPath.percentEncoded)"
+    }
+}
+
+extension LibraryImage {
+    var localURL: String? {
+        guard let baseURL = getServerURL(), let path = path else { return nil }
+        return "\(baseURL)/image/\(path.percentEncoded)"
+    }
+    
+    var localThumbnailURL: String? {
+        guard let baseURL = getServerURL(), let thumbnailPath = thumbnailPath else { return nil }
+        return "\(baseURL)/image/\(thumbnailPath.percentEncoded)"
+    }
+    
+    var localSmallThumbnailURL: String? {
+        guard let baseURL = getServerURL(), let smallThumbnailPath = smallThumbnailPath else { return nil }
+        return "\(baseURL)/image/\(smallThumbnailPath.percentEncoded)"
     }
 }

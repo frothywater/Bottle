@@ -124,10 +124,18 @@ struct ContentView: View {
     }
         
     private func libraryView(community: String) -> some View {
-        PostGrid(model: PaginatedMediaViewModel(orderByWork: true) { page in
-            try await fetchCommunityWorks(community: community, page: page)
-        })
-        .id(PostGridID.library(community))
+        Group {
+            if community == "panda" {
+                PostGrid(model: PaginatedPostViewModel(orderByWork: true) { page in
+                    try await fetchCommunityWorks(community: community, page: page)
+                })
+            } else {
+                MediaGrid(model: PaginatedMediaViewModel(orderByWork: true) { page in
+                    try await fetchCommunityWorks(community: community, page: page)
+                })
+            }
+        }
+        .id(MediaGridID.library(community))
         .navigationTitle("Library: \(community.capitalized)")
     }
     
@@ -142,19 +150,35 @@ struct ContentView: View {
     @ViewBuilder
     private func libraryUserView(community: String, selection: User.ID?) -> some View {
         if let userID = selection {
-            PostGrid(model: PaginatedMediaViewModel { page in
-                try await fetchArchivedUserPosts(community: community, userID: userID.userId, page: page)
-            })
-            .id(PostGridID.libraryByUser(userID))
+            Group {
+                if community == "panda" {
+                    PostGrid(model: PaginatedPostViewModel { page in
+                        try await fetchArchivedUserPosts(community: community, userID: userID.userId, page: page)
+                    })
+                } else {
+                    MediaGrid(model: PaginatedMediaViewModel { page in
+                        try await fetchArchivedUserPosts(community: community, userID: userID.userId, page: page)
+                    })
+                }
+            }
+            .id(MediaGridID.libraryByUser(userID))
             .navigationTitle("Works in Library: \(community.capitalized)")
         }
     }
     
     private func feedView(feed: Feed) -> some View {
-        PostGrid(model: PaginatedMediaViewModel { page in
-            try await fetchPosts(community: feed.community, feedID: feed.feedId, page: page)
-        })
-        .id(PostGridID.feed(feed.id))
+        Group {
+            if feed.community == "panda" {
+                PostGrid(model: PaginatedPostViewModel { page in
+                    try await fetchPosts(community: feed.community, feedID: feed.feedId, page: page)
+                })
+            } else {
+                MediaGrid(model: PaginatedMediaViewModel { page in
+                    try await fetchPosts(community: feed.community, feedID: feed.feedId, page: page)
+                })
+            }
+        }
+        .id(MediaGridID.feed(feed.id))
         .navigationTitle("Feed: \(feed.name.capitalized)")
     }
     
@@ -169,10 +193,18 @@ struct ContentView: View {
     @ViewBuilder
     private func feedUserView(feed: Feed, selection: User.ID?) -> some View {
         if let userID = selection {
-            PostGrid(model: PaginatedMediaViewModel { page in
-                try await fetchFeedUserPosts(community: feed.community, feedID: feed.feedId, userID: userID.userId, page: page)
-            })
-            .id(PostGridID.feedByUser(feed.id, userID))
+            Group {
+                if feed.community == "panda" {
+                    PostGrid(model: PaginatedPostViewModel { page in
+                        try await fetchFeedUserPosts(community: feed.community, feedID: feed.feedId, userID: userID.userId, page: page)
+                    })
+                } else {
+                    MediaGrid(model: PaginatedMediaViewModel { page in
+                        try await fetchFeedUserPosts(community: feed.community, feedID: feed.feedId, userID: userID.userId, page: page)
+                    })
+                }
+            }
+            .id(MediaGridID.feedByUser(feed.id, userID))
             .navigationTitle("Posts in Feed: \(feed.name.capitalized)")
         }
     }
