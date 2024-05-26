@@ -31,19 +31,19 @@ struct PostView: View {
         self.mediaImagePairs = media.map { m in (m, images.first(where: { $0.pageIndex == m.pageIndex })) }
     }
 
-    var coverWidth: Int {
+    var coverWidth: Int? {
         guard let (media, image) = mediaImagePairs.first else { return 100 }
-        return image?.width ?? media.width ?? 100
+        return image?.width ?? media.width
     }
 
-    var coverHeight: Int {
+    var coverHeight: Int? {
         guard let (media, image) = mediaImagePairs.first else { return 100 }
-        return image?.height ?? media.height ?? 100
+        return image?.height ?? media.height
     }
 
     var coverThumbnailURL: String? {
-        guard let (_, image) = mediaImagePairs.first else { return nil }
-        return image?.localThumbnailURL
+        guard let (media, image) = mediaImagePairs.first else { return nil }
+        return image?.localThumbnailURL ?? media.thumbnailUrl
     }
 
     var body: some View {
@@ -135,7 +135,7 @@ struct GalleryView: View {
     @ViewBuilder
     func imageView(item: (Media, LibraryImage?)) -> some View {
         let (media, image) = item
-        let url = image?.localURL ?? image?.localThumbnailURL
+        let url = image?.localURL ?? image?.localThumbnailURL ?? media.url ?? media.thumbnailUrl
         let width = image?.width ?? media.width ?? 100
         let height = image?.height ?? media.height ?? 100
         LazyImage(request: url?.imageRequest) { state in
@@ -148,9 +148,7 @@ struct GalleryView: View {
             }
         }
         .fit(width: width, height: height)
-        #if os(iOS)
         .zoomable()
-        #endif
     }
     
     var bar: some View {

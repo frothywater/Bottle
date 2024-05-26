@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		5110A2AD2B74DFA60043D840 /* ViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5110A2AC2B74DFA60043D840 /* ViewModel.swift */; };
+		512202EC2C035327004FC512 /* Settings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 512202EB2C035327004FC512 /* Settings.swift */; };
+		512202EE2C0356B4004FC512 /* Const.swift in Sources */ = {isa = PBXBuildFile; fileRef = 512202ED2C0356B4004FC512 /* Const.swift */; };
 		51297BD92ABE081D0007340C /* Legacy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51297BD82ABE081D0007340C /* Legacy.swift */; };
 		5135F1442B844EA9003A6C4B /* Request.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5135F1432B844EA9003A6C4B /* Request.swift */; };
 		514D09012AAC48EE0084C4BD /* Nuke in Frameworks */ = {isa = PBXBuildFile; productRef = 514D09002AAC48EE0084C4BD /* Nuke */; };
@@ -21,9 +23,6 @@
 		516D1AFB2AAACB1A00C90060 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 516D1AFA2AAACB1A00C90060 /* ContentView.swift */; };
 		516D1AFD2AAACB1D00C90060 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 516D1AFC2AAACB1D00C90060 /* Assets.xcassets */; };
 		516D1B012AAACB1D00C90060 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 516D1B002AAACB1D00C90060 /* Preview Assets.xcassets */; };
-		516D1B0B2AAACB1E00C90060 /* BottleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 516D1B0A2AAACB1E00C90060 /* BottleTests.swift */; };
-		516D1B152AAACB1E00C90060 /* BottleUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 516D1B142AAACB1E00C90060 /* BottleUITests.swift */; };
-		516D1B172AAACB1E00C90060 /* BottleUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 516D1B162AAACB1E00C90060 /* BottleUITestsLaunchTests.swift */; };
 		51ABF5DC2AEAB80500BCC986 /* UserList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51ABF5DB2AEAB80500BCC986 /* UserList.swift */; };
 		51ABF5DE2AEAB82C00BCC986 /* MediaGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51ABF5DD2AEAB82C00BCC986 /* MediaGrid.swift */; };
 		51C363482AC0908800065E53 /* Util.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51C363472AC0908800065E53 /* Util.swift */; };
@@ -55,6 +54,8 @@
 
 /* Begin PBXFileReference section */
 		5110A2AC2B74DFA60043D840 /* ViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewModel.swift; sourceTree = "<group>"; };
+		512202EB2C035327004FC512 /* Settings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings.swift; sourceTree = "<group>"; };
+		512202ED2C0356B4004FC512 /* Const.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Const.swift; sourceTree = "<group>"; };
 		51297BD82ABE081D0007340C /* Legacy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Legacy.swift; sourceTree = "<group>"; };
 		5135F1432B844EA9003A6C4B /* Request.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Request.swift; sourceTree = "<group>"; };
 		515A6EFE2AAB180200AA1D43 /* Response.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Response.swift; sourceTree = "<group>"; };
@@ -67,10 +68,7 @@
 		516D1AFE2AAACB1D00C90060 /* Bottle.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Bottle.entitlements; sourceTree = "<group>"; };
 		516D1B002AAACB1D00C90060 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		516D1B062AAACB1E00C90060 /* BottleTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BottleTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		516D1B0A2AAACB1E00C90060 /* BottleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BottleTests.swift; sourceTree = "<group>"; };
 		516D1B102AAACB1E00C90060 /* BottleUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BottleUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		516D1B142AAACB1E00C90060 /* BottleUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BottleUITests.swift; sourceTree = "<group>"; };
-		516D1B162AAACB1E00C90060 /* BottleUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BottleUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		51ABF5DB2AEAB80500BCC986 /* UserList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserList.swift; sourceTree = "<group>"; };
 		51ABF5DD2AEAB82C00BCC986 /* MediaGrid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaGrid.swift; sourceTree = "<group>"; };
 		51C363472AC0908800065E53 /* Util.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Util.swift; sourceTree = "<group>"; };
@@ -131,6 +129,7 @@
 				51CC71182AB1B23E00A85047 /* MediaView.swift */,
 				51FE7A832BB4760A00B517DA /* PostGrid.swift */,
 				51FE7A852BB4767E00B517DA /* PostView.swift */,
+				512202EB2C035327004FC512 /* Settings.swift */,
 			);
 			path = Component;
 			sourceTree = "<group>";
@@ -154,6 +153,7 @@
 				51297BD82ABE081D0007340C /* Legacy.swift */,
 				51FF117B2B3F214D00D31336 /* Zoom.swift */,
 				51DAFC902AECBE60004B019A /* VerticalScrollFix.swift */,
+				512202ED2C0356B4004FC512 /* Const.swift */,
 			);
 			path = Util;
 			sourceTree = "<group>";
@@ -162,8 +162,6 @@
 			isa = PBXGroup;
 			children = (
 				516D1AF72AAACB1A00C90060 /* Bottle */,
-				516D1B092AAACB1E00C90060 /* BottleTests */,
-				516D1B132AAACB1E00C90060 /* BottleUITests */,
 				516D1AF62AAACB1A00C90060 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -198,23 +196,6 @@
 				516D1B002AAACB1D00C90060 /* Preview Assets.xcassets */,
 			);
 			path = "Preview Content";
-			sourceTree = "<group>";
-		};
-		516D1B092AAACB1E00C90060 /* BottleTests */ = {
-			isa = PBXGroup;
-			children = (
-				516D1B0A2AAACB1E00C90060 /* BottleTests.swift */,
-			);
-			path = BottleTests;
-			sourceTree = "<group>";
-		};
-		516D1B132AAACB1E00C90060 /* BottleUITests */ = {
-			isa = PBXGroup;
-			children = (
-				516D1B142AAACB1E00C90060 /* BottleUITests.swift */,
-				516D1B162AAACB1E00C90060 /* BottleUITestsLaunchTests.swift */,
-			);
-			path = BottleUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -365,6 +346,7 @@
 				5110A2AD2B74DFA60043D840 /* ViewModel.swift in Sources */,
 				516D1AFB2AAACB1A00C90060 /* ContentView.swift in Sources */,
 				51FB0E312B412ED90065BF35 /* AppState.swift in Sources */,
+				512202EE2C0356B4004FC512 /* Const.swift in Sources */,
 				515A6EFF2AAB180200AA1D43 /* Response.swift in Sources */,
 				51EADE742AC134840019A6CE /* StatusBar.swift in Sources */,
 				51FE7A862BB4767E00B517DA /* PostView.swift in Sources */,
@@ -374,6 +356,7 @@
 				51ABF5DE2AEAB82C00BCC986 /* MediaGrid.swift in Sources */,
 				51FE7A842BB4760A00B517DA /* PostGrid.swift in Sources */,
 				516D1AF92AAACB1A00C90060 /* BottleApp.swift in Sources */,
+				512202EC2C035327004FC512 /* Settings.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -381,7 +364,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				516D1B0B2AAACB1E00C90060 /* BottleTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -389,8 +371,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				516D1B172AAACB1E00C90060 /* BottleUITestsLaunchTests.swift in Sources */,
-				516D1B152AAACB1E00C90060 /* BottleUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

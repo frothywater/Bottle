@@ -21,6 +21,9 @@ struct BottleApp: App {
         #if os(macOS)
         .windowToolbarStyle(.unifiedCompact)
         #endif
+        .commands {
+            InspectorCommands()
+        }
     }
 
     private func initialize() {

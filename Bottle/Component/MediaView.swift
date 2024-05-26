@@ -19,11 +19,10 @@ struct MediaView: View {
     let image: LibraryImage?
 
     var thumbnailURL: String? { if image?.localThumbnailURL != nil { image?.localThumbnailURL } else { media.thumbnailUrl } }
-    var url: String? { if image?.localURL != nil { image?.localURL } else { media.url } }
 
     var body: some View {
         NavigationLink {
-            ImageSheet(url: url)
+            ImageSheet(user: user, post: post, media: media, work: work, image: image)
         } label: {
             content
         }
@@ -33,12 +32,20 @@ struct MediaView: View {
             ImportButton(media: media, work: work, model: model)
         }
     }
+    
+    var tempContent: String {
+        if let link = mediaLink(media: media, post: post, user: user), let thumbnailURL = media.thumbnailUrl {
+            return "\n\(link)\n\(thumbnailURL)\n"
+        } else {
+            return ""
+        }
+    }
 
     var content: some View {
         LazyImage(request: thumbnailURL?.imageRequest) { state in
             if let image = state.image {
                 image.resizable().scaledToFit()
-                    .draggable(image)
+                    .draggable(tempContent)
             } else if state.error != nil {
                 Color.clear.overlay { Image(systemName: "photo") }
             } else {
@@ -52,17 +59,22 @@ struct MediaView: View {
 }
 
 private struct ImageSheet: View {
-    let url: String?
+    let user: User?
+    let post: Post?
+    let media: Media
+    let work: Work?
+    let image: LibraryImage?
+    
+    @State private var showingInspector = false
     @Environment(\.dismiss) private var dismiss
+    
+    var url: String? { if image?.localURL != nil { image?.localURL } else { media.url } }
 
     var body: some View {
         LazyImage(request: url?.imageRequest) { state in
             if let image = state.image {
                 image.resizable().scaledToFit()
-                    .draggable(image)
-                #if os(iOS)
                     .zoomable()
-                #endif
             } else if state.error != nil {
                 Image(systemName: "photo")
             } else {
@@ -72,9 +84,77 @@ private struct ImageSheet: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .contentShape(Rectangle())
         .onTapGesture { dismiss() }
+        .toolbar { toolbar }
+        .inspector(isPresented: $showingInspector) { inspectorPanel }
         #if os(iOS)
-        .toolbar(.hidden)
+        .navigationBarTitleDisplayMode(.inline)
         #endif
+    }
+    
+    @ToolbarContentBuilder
+    var toolbar: some ToolbarContent {
+        ToolbarItem(placement: .automatic) {
+            Button {
+                showingInspector.toggle()
+            } label: {
+                Label("Show Info", systemImage: "info.circle")
+            }
+        }
+    }
+    
+    var inspectorPanel: some View {
+        List {
+            Section("Media") {
+                LabeledContent("Media ID", value: media.mediaId)
+                if let link = mediaLink(media: media, post: post, user: user) { LabeledContent("Link", value: link) }
+                if let url = media.url { LabeledContent("URL", value: url) }
+                if let url = media.thumbnailUrl { LabeledContent("Thumbnail URL", value: url) }
+                LabeledContent("Page", value: media.pageIndex.formatted())
+            }
+            
+            if let post = post {
+                Section("Post") {
+                    LabeledContent("Post ID", value: post.postId)
+                    LabeledContent("Created date", value: post.createdDate.formatted())
+                    LabeledContent("Community", value: post.community.capitalized)
+                    LabeledContent("Text", value: post.text)
+                }
+            }
+            
+            if let user = user {
+                Section("User") {
+                    LabeledContent("User ID", value: user.userId)
+                    if let link = userLink(user: user) { LabeledContent("Link", value: link) }
+                    if let name = user.name { LabeledContent("Name", value: name) }
+                    if let username = user.username { LabeledContent("Username", value: username) }
+                    if let description = user.description { LabeledContent("Description", value: description) }
+                    if let url = user.url { LabeledContent("URL", value: url) }
+                }
+            }
+            
+            if let work = work {
+                Section("Work") {
+                    LabeledContent("Work ID", value: work.id.formatted())
+                    LabeledContent("Added date", value: work.addedDate.formatted())
+                    LabeledContent("Favorite", value: work.favorite.description)
+                    LabeledContent("Rating", value: work.rating.formatted())
+                }
+            }
+            
+            if let image = image {
+                Section("Image") {
+                    LabeledContent("Image ID", value: image.id.formatted())
+                    LabeledContent("Filename", value: image.filename)
+                    if let path = image.path { LabeledContent("Path", value: path) }
+                    if let path = image.thumbnailPath { LabeledContent("Thumbnail path", value: path) }
+                    if let path = image.smallThumbnailPath { LabeledContent("Small thumbnail path", value: path) }
+                    if let width = image.width, let height = image.height { LabeledContent("Dimension", value: "\(width)×\(height)") }
+                    if let size = image.size { LabeledContent("File Size", value: size.formatted()) }
+                }
+            }
+        }
+        .listStyle(.inset)
+        .textSelection(.enabled)
     }
 }
 
@@ -127,5 +207,33 @@ private struct ImportButton: View {
                 print(error)
             }
         }
+    }
+}
+
+private func mediaLink(media: Media, post: Post?, user: User?) -> String? {
+    guard let post = post else { return nil }
+    switch post.community {
+    case "twitter":
+        guard let user = user, let username = user.username else { return nil }
+        return "https://twitter.com/\(username)/status/\(post.postId)/photo/\(media.pageIndex + 1)"
+    case "pixiv":
+        return "https://www.pixiv.net/artworks/\(post.postId)"
+    case "yandere":
+        return "https://yande.re/post/show/\(post.postId)"
+    default:
+        return nil
+    }
+}
+
+private func userLink(user: User?) -> String? {
+    guard let user = user else { return nil }
+    switch user.community {
+    case "twitter":
+        guard let username = user.username else { return nil }
+        return "https://twitter.com/\(username)"
+    case "pixiv":
+        return "https://www.pixiv.net/users/\(user.userId)"
+    default:
+        return nil
     }
 }

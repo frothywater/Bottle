@@ -10,8 +10,6 @@ import SwiftUI
 struct ContentView: View {
     @Binding var appState: AppState
     
-    @AppStorage("serverAddress") var serverAddress: String = ""
-    
     @State private var destinationSelection: SidebarDestination?
     @State private var userSelection: User.ID?
     @State private var showingSetting = false
@@ -49,7 +47,14 @@ struct ContentView: View {
             feedSection
         }
         .toolbar { toolbar }
-        .sheet(isPresented: $showingSetting) { settingSheet }
+        .sheet(isPresented: $showingSetting) {
+            Settings()
+                .onSubmit {
+                    setPandaCookies()
+                    Task { await refetch() }
+                    showingSetting = false
+                }
+        }
     }
 
     private var librarySection: some View {
@@ -226,26 +231,6 @@ struct ContentView: View {
         }
     }
     
-    @ViewBuilder
-    private var settingSheet: some View {
-        Spacer()
-        HStack {
-            Spacer()
-            Form {
-                Section(header: Text("Server")) {
-                    TextField("Address", text: $serverAddress)
-                        .autocorrectionDisabled()
-                        .onSubmit {
-                            Task { await refetch() }
-                            showingSetting = false
-                        }
-                }
-            }
-            Spacer()
-        }
-        Spacer()
-    }
-    
     private func refetch() async {
         do {
             appState = AppState()
@@ -255,5 +240,14 @@ struct ContentView: View {
         } catch {
             print(error)
         }
+    }
+    
+    private func setPandaCookies() {
+        guard let ipbMemberID = UserDefaults.standard.string(forKey: "pandaMemberID"),
+            let ipbPassHash = UserDefaults.standard.string(forKey: "pandaPassHash"),
+            let igneous = UserDefaults.standard.string(forKey: "pandaIgneous") else { return }
+        let cookies = pandaCookies(ipbMemberID: ipbMemberID, ipbPassHash: ipbPassHash, igneous: igneous)
+        cookies.forEach { HTTPCookieStorage.shared.setCookie($0) }
+        print("Panda cookies set. \(cookies)")
     }
 }

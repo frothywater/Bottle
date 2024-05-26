@@ -27,7 +27,7 @@ struct UserList<VM: UserProvider & ContentLoader & ObservableObject>: View {
                 Color.clear.task { await model.load() }
             }
         }
-        .listStyle(.plain)
+        .listStyle(.inset)
         .contentMargins(.bottom, 30)
         .scrollContentBackground(.hidden)
         .overlay(alignment: .bottom) { StatusBar(message: model.message) }

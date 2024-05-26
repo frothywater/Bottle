@@ -87,4 +87,23 @@ private struct ZoomableScrollView<Content: View>: UIViewRepresentable {
         }
     }
 }
+
+#else
+import SwiftUI
+
+extension View {
+    func zoomable() -> some View {
+        ZoomableView {
+            self
+        }
+    }
+}
+
+private struct ZoomableView<Content: View>: View {
+    let content: () -> Content
+
+    var body: some View {
+        content()
+    }
+}
 #endif

@@ -173,9 +173,7 @@ extension UserProvider {
         
         var mediaImages = [(Media, LibraryImage?)]()
         for postID in postIDs {
-            let workID = postWork[postID]
-            let work = workDict.at(workID)
-            if work?.pageIndex != nil {
+            if postWork[postID] == nil {
                 // Single-image work
                 for mediaID in postMedia[postID] ?? [] {
                     let media = mediaDict[mediaID]!

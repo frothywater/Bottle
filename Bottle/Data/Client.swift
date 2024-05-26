@@ -84,6 +84,27 @@ func getServerURL() -> String? {
     UserDefaults.standard.string(forKey: "serverAddress")
 }
 
+func newCookie(key: String, value: String, domain: String) -> HTTPCookie {
+    HTTPCookie(properties: [
+        .name: key,
+        .value: value,
+        .domain: domain,
+        .path: "/",
+        .secure: "TRUE",
+        .expires: NSDate(timeIntervalSinceNow: TimeInterval(60 * 60 * 24 * 365))
+    ])!
+}
+
+func pandaCookies(ipbMemberID: String, ipbPassHash: String, igneous: String?) -> [HTTPCookie] {
+    var result = [HTTPCookie]()
+    result.append(newCookie(key: "ipb_member_id", value: ipbMemberID, domain: Const.pandaDomain))
+    result.append(newCookie(key: "ipb_pass_hash", value: ipbPassHash, domain: Const.pandaDomain))
+    if let igneous = igneous {
+        result.append(newCookie(key: "igneous", value: igneous, domain: Const.pandaDomain))
+    }
+    return result
+}
+
 private enum HTTPMethod: String {
     case get = "GET"
     case post = "POST"
