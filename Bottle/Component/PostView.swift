@@ -5,6 +5,7 @@
 //  Created by Cobalt on 3/27/24.
 //
 
+import Nuke
 import NukeUI
 import SwiftUI
 
@@ -50,7 +51,7 @@ struct PostView: View {
             }
         }
         .fit(width: width, height: height)
-        .frame(minHeight: 200)
+        .frame(minHeight: 300)
         .contentShape(Rectangle())
         .cornerRadius(10)
     }
@@ -61,7 +62,7 @@ private struct GalleryView: View {
     fileprivate var model: GalleryViewModel
     let outerModel: PostProvider
     
-    private var columns: [GridItem] { [.init(.adaptive(minimum: 200, maximum: 400))] }
+    private var columns: [GridItem] { [.init(.adaptive(minimum: 300, maximum: 400))] }
     
     var body: some View {
         ScrollView {
@@ -74,39 +75,63 @@ private struct GalleryView: View {
                     }
                 }
             }
-            .padding(10)
+            .padding(20)
         }
-        .onAppear {
+        .task {
             if !model.hasDetail {
-                Task { await model.fetchDetail() }
+                await model.fetchDetail()
             }
         }
     }
     
+    var tagText: String {
+        if let tags = model.info?.tags {
+            return tags.sorted().joined(separator: "  ")
+        }
+        return ""
+    }
+    
     @ViewBuilder
     var infoArea: some View {
-        VStack(spacing: 10) {
-            HStack(spacing: 10) {
-                VStack(alignment: .leading) {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .top, spacing: 10) {
+                VStack(alignment: .leading, spacing: 5) {
                     Text(model.post.text).font(.title)
-                    if let info = model.info {
-                        if let englishTitle = info.englishTitle { Text(englishTitle).font(.title2) }
+                    if let englishTitle = model.info?.englishTitle {
+                        Text(englishTitle).font(.title2).foregroundStyle(.secondary)
                     }
                 }
-                
+                Spacer()
                 ImportButton(post: model.post, work: model.work, model: outerModel)
             }
             
-            HStack(spacing: 10) {
-                VStack {
-                    Text("Details")
+            HStack(alignment: .firstTextBaseline, spacing: 10) {
+                VStack(alignment: .leading, spacing: 5) {
+                    LabeledContent("Post ID", value: model.post.postId)
+                    LabeledContent("Created date", value: model.post.createdDate.formatted())
+                    if let work = model.work {
+                        LabeledContent("Work ID", value: work.id.formatted())
+                        LabeledContent("Added date", value: work.addedDate.formatted())
+                    }
+                    if let info = model.info {
+                        LabeledContent("Category", value: info.category)
+                        LabeledContent("Uploader", value: info.uploader)
+                        LabeledContent("Media count", value: model.items.count.formatted())
+                        if let parent = info.parent { LabeledContent("Parent", value: parent) }
+                        if let visible = info.visible { LabeledContent("Visible", value: visible.description) }
+                        if let language = info.language { LabeledContent("Language", value: language) }
+                        if let fileSize = info.fileSize { LabeledContent("File size", value: fileSize.formatted()) }
+                        LabeledContent("Link", value: "\(Const.pandaBaseURL)/g/\(model.post.postId)/\(info.token)")
+                    }
                 }
                 
-                VStack {
-                    Text("Tags")
-                }
+//                VStack(alignment: .leading, spacing: 5) {
+//                    Text("Tags").bold()
+//                    Text(tagText).multilineTextAlignment(.leading)
+//                }
             }
         }
+        .textSelection(.enabled)
     }
     
     @ViewBuilder
@@ -135,12 +160,14 @@ private struct GalleryView: View {
                         .fit(width: width, height: height)
                     } else {
                         ProgressView()
-                            .onAppear {
-                                Task { await model.fetchPreview(index: item.index) }
+                            .task(id: item.index) {
+                                if model.needFetchPreview(index: item.index) {
+                                    await model.fetchPreview(index: item.index)
+                                }
                             }
                     }
                 }
-                .frame(maxWidth: .infinity, minHeight: 200)
+                .frame(maxWidth: .infinity, minHeight: 300)
                 .contentShape(Rectangle())
                 .cornerRadius(10)
                 .overlay { RoundedRectangle(cornerRadius: 10).stroke(.separator) }
@@ -160,9 +187,13 @@ private struct GalleryReader: View {
     @State private var index: Int
     @State private var showingBar = false
     
+    private let imagePrefetcher: ImagePrefetcher
+    
     init(model: GalleryViewModel, index: Int = 0) {
         self.model = model
         self.index = index
+        self.imagePrefetcher = ImagePrefetcher(maxConcurrentRequestCount: 10)
+        self.imagePrefetcher.priority = .normal
     }
     
     private var items: [GalleryItem] {
@@ -174,20 +205,32 @@ private struct GalleryReader: View {
         }
     }
     
+    var currentItem: GalleryItem { items.first(where: { $0.index == index })! }
+    
     var body: some View {
         ZStack {
             #if os(iOS)
             TabView(selection: $index) {
                 ForEach(items, id: \.index) { item in
                     GalleryMediaView(item: item, model: model)
+                        .onAppear {
+                            // Use detached task to avoid cancellation
+                            Task { await fetch(index: index) }
+                        }
                 }
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
             #else
-            GalleryMediaView(item: items.first(where: { $0.index == index })!, model: model)
+            GalleryMediaView(item: currentItem, model: model)
+                .onAppear {
+                    Task { await fetch(index: index) }
+                }
             #endif
             
             tapDetection
+        }
+        .onChange(of: index) {
+            Task { await fetch(index: index) }
         }
         .overlay(alignment: .bottom) { if showingBar { bar } }
         #if os(iOS)
@@ -234,6 +277,26 @@ private struct GalleryReader: View {
     private var slider: some View {
         Slider(value: .convert(from: $index), in: 0...(Float(items.count) - 1), step: 1)
     }
+    
+    private func fetch(index: Int, prefetchCount: Int = 10) async {
+        let endIndex = min(index + prefetchCount, items.count)
+            
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask(priority: .high) { await fetchOne(index: index) }
+            for index in (index + 1)..<endIndex {
+                group.addTask { await fetchOne(index: index) }
+            }
+        }
+    }
+    
+    private func fetchOne(index: Int) async {
+        if model.needFetchImage(index: index) {
+            await model.fetchImage(index: index)
+        }
+        if let request = model.items[index].imageURL?.imageRequest, !ImagePipeline.shared.cache.containsCachedImage(for: request) {
+            imagePrefetcher.startPrefetching(with: [request])
+        }
+    }
 }
 
 @MainActor
@@ -242,11 +305,7 @@ private struct GalleryMediaView: View {
     fileprivate var model: GalleryViewModel
     
     var body: some View {
-        let media = item.media
-        let image = item.image
-        let url = image?.localURL ?? image?.localThumbnailURL ?? media?.url
-        
-        if let url = url {
+        if let url = item.imageURL {
             LazyImage(request: url.imageRequest) { state in
                 if let image = state.image {
                     image.resizable().scaledToFit()
@@ -261,9 +320,6 @@ private struct GalleryMediaView: View {
             VStack {
                 Text(item.index.formatted()).font(.headline)
                 ProgressView()
-            }
-            .onAppear {
-                Task { await model.fetchImage(index: item.index) }
             }
         }
     }
@@ -330,6 +386,7 @@ private struct GalleryItem {
     
     var hasPreview: Bool { media?.thumbnailUrl != nil }
     var hasImage: Bool { media?.url != nil }
+    var imageURL: String? { image?.localURL ?? image?.localThumbnailURL ?? media?.url }
     
     func withMedia(_ newMedia: Media) -> GalleryItem {
         GalleryItem(index: index, media: newMedia, image: image)
@@ -355,6 +412,7 @@ private enum GalleryPreviewPageState {
 }
 
 @Observable
+@MainActor
 private class GalleryViewModel {
     var user: User?
     var post: Post
@@ -363,9 +421,9 @@ private class GalleryViewModel {
     
     var outerModel: PostProvider
     
-    private var pageSize: Int
-    private var loadingItem: [Bool] = []
-    private var pageStates: [GalleryPreviewPageState]
+    var pageSize: Int
+    var loadingItem: [Bool] = []
+    var pageStates: [GalleryPreviewPageState]
     
     private static let defaultPageSize = 20
     
@@ -441,9 +499,14 @@ private class GalleryViewModel {
         }
     }
     
+    func needFetchPreview(index: Int) -> Bool {
+        let pageIndex = Int(index / pageSize)
+        return pageStates.indices.contains(pageIndex) && pageStates[pageIndex] == .empty
+    }
+    
     func fetchPreview(index: Int) async {
         let pageIndex = Int(index / pageSize)
-        guard pageStates.indices.contains(pageIndex), pageStates[pageIndex] == .empty else { return }
+        guard needFetchPreview(index: index) else { return }
         
         do {
             pageStates[pageIndex] = .loading
@@ -464,6 +527,12 @@ private class GalleryViewModel {
         }
     }
     
+    func needFetchImage(index: Int) -> Bool {
+        let pageIndex = Int(index / pageSize)
+        return pageStates.indices.contains(pageIndex) && pageStates[pageIndex] == .loaded &&
+            items.indices.contains(index) && !loadingItem[index] && !items[index].hasImage
+    }
+    
     func fetchImage(index: Int) async {
         let pageIndex = Int(index / pageSize)
         guard pageStates.indices.contains(pageIndex) else { return }
@@ -471,8 +540,7 @@ private class GalleryViewModel {
             await fetchPreview(index: index)
         }
         
-        guard pageStates[pageIndex] == .loaded, items.indices.contains(index),
-              !loadingItem[index], !items[index].hasImage else { return }
+        guard needFetchImage(index: index) else { return }
 
         do {
             loadingItem[index] = true
