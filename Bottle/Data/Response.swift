@@ -53,9 +53,11 @@ struct Post: Decodable {
     let community: String
     let userId: String?
     let text: String
+    let mediaCount: Int?
     let thumbnailUrl: String?
     let createdDate: Date
     let addedDate: Date?
+    let extra: PostExtra?
 }
 
 struct User: Decodable {
@@ -78,6 +80,7 @@ struct Media: Decodable {
     let width: Int?
     let height: Int?
     let thumbnailUrl: String?
+    let extra: MediaExtra?
 }
 
 struct Work: Decodable, Identifiable {
@@ -153,6 +156,70 @@ struct EndpointResponse: EntityContainer, IndefiniteResponse, Decodable {
 
     let reachedEnd: Bool
     let nextOffset: String?
+    let totalItems: Int?
+}
+
+// MARK: - Extra
+enum PostExtra: Decodable {
+    case pixiv(PixivIllustExtra)
+    case yandere(YanderePostExtra)
+    case panda(PandaGalleryExtra)
+    
+    private enum CodingKeys: String, CodingKey {
+        case pixiv, yandere, panda
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        if let pixivExtra = try container.decodeIfPresent(PixivIllustExtra.self, forKey: .pixiv) {
+            self = .pixiv(pixivExtra)
+        } else if let yandereExtra = try container.decodeIfPresent(YanderePostExtra.self, forKey: .yandere) {
+            self = .yandere(yandereExtra)
+        } else if let pandaExtra = try container.decodeIfPresent(PandaGalleryExtra.self, forKey: .panda) {
+            self = .panda(pandaExtra)
+        } else {
+            throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: [], debugDescription: "Invalid PostExtra"))
+        }
+    }
+}
+
+enum MediaExtra: Decodable {
+    case twitter(type: String)
+    case panda(token: String)
+}
+
+struct PixivIllustExtra: Decodable {
+   let title: String
+   let type: String
+   let restrict: Bool
+   let sanityLevel: Int
+   let seriesId: Int?
+   let seriesTitle: String?
+   let tags: [String]
+}
+
+struct YanderePostExtra: Decodable {
+    let creatorId: Int?
+    let author: String
+    let source: String
+    let rating: String
+    let fileSize: Int
+    let hasChildren: Bool
+    let parentId: Int?
+    let tags: [String]
+}
+
+struct PandaGalleryExtra: Decodable {
+    let token: String
+    let category: String
+    let uploader: String
+    let rating: Float
+    let tags: [String]
+    let englishTitle: String?
+    let parent: String?
+    let visible: Bool?
+    let language: String?
+    let fileSize: Int?
 }
 
 // MARK: - Scheme

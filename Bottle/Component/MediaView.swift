@@ -158,6 +158,7 @@ private struct ImageSheet: View {
     }
 }
 
+@MainActor
 private struct ImportButton: View {
     let media: Media
     let work: Work?

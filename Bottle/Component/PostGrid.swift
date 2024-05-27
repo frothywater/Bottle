@@ -19,8 +19,7 @@ struct PostGrid<VM: PostProvider & ContentLoader & ObservableObject>: View {
                 if model.startedLoading {
                     ForEach(Array(model.postIDs.enumerated()), id: \.element) { index, postID in
                         if let (user, post, work, media, images) = model.entities(for: postID) {
-                            PostView(postID: postID, model: model,
-                                     user: user, post: post, work: work, media: media, images: images)
+                            PostView(user: user, post: post, work: work, media: media, images: images, model: model)
                                 .task {
                                     if index == model.postIDs.count - 1 { await model.load() }
                                 }

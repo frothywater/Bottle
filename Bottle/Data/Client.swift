@@ -78,6 +78,16 @@ func fetchTemporaryFeed(community: String, request: EndpointRequest) async throw
     return try decode(data)
 }
 
+func fetchPandaPost(id: String, page: Int = 0) async throws -> EndpointResponse {
+    let data = try await call(path: "/panda/api/post/\(id)?page=\(page)")
+    return try decode(data)
+}
+
+func fetchPandaMedia(id: String, page: Int) async throws -> EndpointResponse {
+    let data = try await call(path: "/panda/api/post/\(id)/media/\(page)")
+    return try decode(data)
+}
+
 // MARK: - Helper
 
 func getServerURL() -> String? {
