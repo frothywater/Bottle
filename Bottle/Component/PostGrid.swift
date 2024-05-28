@@ -18,8 +18,8 @@ struct PostGrid<VM: PostProvider & ContentLoader & ObservableObject>: View {
             LazyVGrid(columns: columns, spacing: 10) {
                 if model.startedLoading {
                     ForEach(Array(model.postIDs.enumerated()), id: \.element) { index, postID in
-                        if let (user, post, work, media, images) = model.entities(for: postID) {
-                            PostView(user: user, post: post, work: work, media: media, images: images, model: model)
+                        if let entities = model.entities(for: postID) {
+                            PostView(entities: entities, model: model)
                                 .task {
                                     if index == model.postIDs.count - 1 { await model.load() }
                                 }

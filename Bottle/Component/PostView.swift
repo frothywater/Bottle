@@ -11,34 +11,29 @@ import SwiftUI
 
 @MainActor
 struct PostView: View {
-    fileprivate var model: GalleryViewModel
-    let outerModel: PostProvider
-
-    init(user: User?, post: Post, work: Work?, media: [Media], images: [LibraryImage], model: PostProvider) {
-        self.model = GalleryViewModel(user: user, post: post, work: work, media: media, images: images, outerModel: model)
-        self.outerModel = model
-    }
+    let entities: PostEntities
+    let model: PostProvider
 
     var body: some View {
         NavigationLink {
-            GalleryView(model: model, outerModel: outerModel)
+            GalleryView(entities: entities, outerModel: model)
         } label: {
             outer
         }
         .buttonStyle(.plain)
         .overlay { RoundedRectangle(cornerRadius: 10).stroke(.separator) }
         .overlay(alignment: .topTrailing) {
-            ImportButton(post: model.post, work: model.work, model: outerModel)
+            ImportButton(post: entities.post, work: entities.work, outerModel: model)
         }
     }
 
     @ViewBuilder
     private var outer: some View {
-        let media = model.items.first?.media
-        let image = model.items.first?.image
+        let media = entities.media.first
+        let image = entities.images.first { $0.pageIndex == media?.pageIndex }
         let width = media?.width ?? image?.width
         let height = media?.height ?? image?.height
-        let url = model.work?.localThumbnailURL ?? model.post.thumbnailUrl
+        let url = entities.work?.localThumbnailURL ?? entities.post.thumbnailUrl
         
         LazyImage(request: url?.imageRequest) { state in
             if let image = state.image {
@@ -59,10 +54,18 @@ struct PostView: View {
 
 @MainActor
 private struct GalleryView: View {
+    let entities: PostEntities
     fileprivate var model: GalleryViewModel
     let outerModel: PostProvider
     
-    private var columns: [GridItem] { [.init(.adaptive(minimum: 300, maximum: 400))] }
+    @AppStorage("postViewGridColumnCount") private var columnCount = 3.0
+    private var columns: [GridItem] { Array(repeating: GridItem(.flexible()), count: lround(columnCount)) }
+    
+    init(entities: PostEntities, outerModel: PostProvider) {
+        self.entities = entities
+        self.model = GalleryViewModel(entities: entities, outerModel: outerModel)
+        self.outerModel = outerModel
+    }
     
     var body: some View {
         ScrollView {
@@ -77,6 +80,11 @@ private struct GalleryView: View {
             }
             .padding(20)
         }
+        .contentMargins(.bottom, 30)
+        .overlay(alignment: .bottom) { StatusBar(message: model.message, columnCount: $columnCount) }
+        #if os(iOS)
+        .navigationBarTitleDisplayMode(.inline)
+        #endif
         .task {
             if !model.hasDetail {
                 await model.fetchDetail()
@@ -102,7 +110,7 @@ private struct GalleryView: View {
                     }
                 }
                 Spacer()
-                ImportButton(post: model.post, work: model.work, model: outerModel)
+                ImportButton(post: entities.post, work: entities.work, outerModel: outerModel)
             }
             
             HStack(alignment: .firstTextBaseline, spacing: 10) {
@@ -134,37 +142,38 @@ private struct GalleryView: View {
         .textSelection(.enabled)
     }
     
-    @ViewBuilder
     func thumbnail(item: GalleryItem) -> some View {
-        let media = item.media
-        let image = item.image
-        let width = media?.width ?? image?.width
-        let height = media?.height ?? image?.height
-        let url = image?.localSmallThumbnailURL ?? image?.localThumbnailURL ?? media?.thumbnailUrl
-        
         NavigationLink {
             GalleryReader(model: model, index: item.index)
         } label: {
-            VStack {
+            VStack(spacing: 10) {
                 Group {
                     if item.hasPreview {
-                        LazyImage(request: url?.imageRequest) { state in
+                        LazyImage(request: item.previewImageURL?.imageRequest) { state in
                             if let image = state.image {
                                 image.resizable().scaledToFit()
                             } else if state.error != nil {
                                 Color.clear.overlay { Image(systemName: "photo") }
                             } else {
-                                Color.clear
-                            }
-                        }
-                        .fit(width: width, height: height)
-                    } else {
-                        ProgressView()
-                            .task(id: item.index) {
-                                if model.needFetchPreview(index: item.index) {
-                                    await model.fetchPreview(index: item.index)
+                                Color.clear.overlay {
+                                    VStack(spacing: 10) {
+                                        ProgressView()
+                                        Text("Loading…").foregroundStyle(.secondary)
+                                    }
                                 }
                             }
+                        }
+                        .fit(width: item.width, height: item.height)
+                    } else {
+                        VStack(spacing: 10) {
+                            ProgressView()
+                            Text("Fetching…").foregroundStyle(.secondary)
+                        }
+                        .task(id: item.index) {
+                            if model.needFetchPreview(index: item.index) {
+                                await model.fetchPreview(index: item.index)
+                            }
+                        }
                     }
                 }
                 .frame(maxWidth: .infinity, minHeight: 300)
@@ -172,7 +181,7 @@ private struct GalleryView: View {
                 .cornerRadius(10)
                 .overlay { RoundedRectangle(cornerRadius: 10).stroke(.separator) }
                 
-                Text(item.index.formatted()).font(.caption).foregroundStyle(.secondary)
+                Text(item.readableIndex.formatted()).font(.caption).foregroundStyle(.secondary)
             }
         }
         .buttonStyle(.plain)
@@ -186,12 +195,14 @@ private struct GalleryReader: View {
     let direction: LayoutDirection = .rightToLeft
     @State private var index: Int
     @State private var showingBar = false
+    @State private var prefetched: [Bool]
     
     private let imagePrefetcher: ImagePrefetcher
     
     init(model: GalleryViewModel, index: Int = 0) {
         self.model = model
         self.index = index
+        self.prefetched = Array(repeating: false, count: model.items.count)
         self.imagePrefetcher = ImagePrefetcher(maxConcurrentRequestCount: 10)
         self.imagePrefetcher.priority = .normal
     }
@@ -267,7 +278,7 @@ private struct GalleryReader: View {
             default:
                 slider
             }
-            Text(String(index))
+            Text((index + 1).formatted())
         }
         .padding(.horizontal, 15)
         .frame(height: 50)
@@ -275,7 +286,8 @@ private struct GalleryReader: View {
     }
     
     private var slider: some View {
-        Slider(value: .convert(from: $index), in: 0...(Float(items.count) - 1), step: 1)
+        Slider(value: Binding<Float>(get: { Float($index.wrappedValue) }, set: { $index.wrappedValue = Int($0) }),
+               in: 0...Float(items.count - 1), step: 1)
     }
     
     private func fetch(index: Int, prefetchCount: Int = 10) async {
@@ -293,8 +305,16 @@ private struct GalleryReader: View {
         if model.needFetchImage(index: index) {
             await model.fetchImage(index: index)
         }
-        if let request = model.items[index].imageURL?.imageRequest, !ImagePipeline.shared.cache.containsCachedImage(for: request) {
-            imagePrefetcher.startPrefetching(with: [request])
+        prefetchImage(index: index)
+    }
+    
+    private func prefetchImage(index: Int) {
+        if !prefetched[index], let request = model.items[index].imageURL?.imageRequest {
+            if !ImagePipeline.shared.cache.containsCachedImage(for: request) {
+                print("Prefetching image \(index)")
+                imagePrefetcher.startPrefetching(with: [request])
+            }
+            prefetched[index] = true
         }
     }
 }
@@ -310,16 +330,21 @@ private struct GalleryMediaView: View {
                 if let image = state.image {
                     image.resizable().scaledToFit()
                 } else if state.error != nil {
-                    Color.clear.overlay { Image(systemName: "photo") }
+                    Image(systemName: "photo")
                 } else {
-                    Color.clear.overlay { ProgressView() }
+                    VStack(spacing: 10) {
+                        Text(item.readableIndex.formatted()).font(.headline)
+                        ProgressView()
+                        Text("Loading…").foregroundStyle(.secondary)
+                    }
                 }
             }
             .zoomable()
         } else {
-            VStack {
-                Text(item.index.formatted()).font(.headline)
+            VStack(spacing: 10) {
+                Text(item.readableIndex.formatted()).font(.headline)
                 ProgressView()
+                Text("Fetching…").foregroundStyle(.secondary)
             }
         }
     }
@@ -329,7 +354,7 @@ private struct GalleryMediaView: View {
 private struct ImportButton: View {
     let post: Post
     let work: Work?
-    let model: PostProvider
+    let outerModel: PostProvider
     @State var operating = false
 
     private var imported: Bool { work != nil }
@@ -365,10 +390,10 @@ private struct ImportButton: View {
                 if imported {
                     guard let workID = work?.id else { return }
                     try await deleteWork(workID: workID)
-                    model.deleteWork(workID, for: post.id)
+                    outerModel.deleteWork(workID, for: post.id)
                 } else {
                     let response = try await addWork(community: post.community, postID: post.postId, page: nil)
-                    model.updateEntities(response)
+                    outerModel.updateEntities(response)
                 }
             } catch {
                 print(error)
@@ -384,9 +409,16 @@ private struct GalleryItem {
     let media: Media?
     let image: LibraryImage?
     
-    var hasPreview: Bool { media?.thumbnailUrl != nil }
-    var hasImage: Bool { media?.url != nil }
+    var previewImageURL: String? { image?.localSmallThumbnailURL ?? image?.localThumbnailURL ?? media?.thumbnailUrl }
     var imageURL: String? { image?.localURL ?? image?.localThumbnailURL ?? media?.url }
+    
+    var hasPreview: Bool { previewImageURL != nil }
+    var hasImage: Bool { imageURL != nil }
+    
+    var width: Int? { image?.width ?? media?.width }
+    var height: Int? { image?.height ?? media?.height }
+    
+    var readableIndex: Int { index + 1 }
     
     func withMedia(_ newMedia: Media) -> GalleryItem {
         GalleryItem(index: index, media: newMedia, image: image)
@@ -427,16 +459,16 @@ private class GalleryViewModel {
     
     private static let defaultPageSize = 20
     
-    init(user: User?, post: Post, work: Work?, media: [Media], images: [LibraryImage], outerModel: PostProvider) {
-        self.user = user
-        self.post = post
-        self.work = work
+    init(entities: PostEntities, outerModel: PostProvider) {
+        self.user = entities.user
+        self.post = entities.post
+        self.work = entities.work
         self.outerModel = outerModel
         
         // Put media and images into an item array in correct order
-        let items = Self.getItems(post: post, media: media, images: images)
+        let items = Self.getItems(post: entities.post, media: entities.media, images: entities.images)
         self.items = items
-        self.loadingItem = Array(repeating: false, count: post.mediaCount ?? media.count)
+        self.loadingItem = Array(repeating: false, count: entities.post.mediaCount ?? entities.media.count)
         // Prepare preview page states
         self.pageSize = Self.defaultPageSize
         self.pageStates = Self.getPageStates(items: items, pageSize: Self.defaultPageSize)
@@ -450,6 +482,15 @@ private class GalleryViewModel {
     }
     
     var hasDetail: Bool { info?.fileSize != nil }
+    
+    var thumbnailURL: String? { work?.localThumbnailURL ?? post.thumbnailUrl }
+    
+    var message: String {
+        let hasPreviewItems = items.filter(\.hasPreview).count
+        let hasImageItems = items.filter(\.hasImage).count
+        let loadedPages = pageStates.filter { $0 == .loaded }.count
+        return "\(loadedPages)/\(pageStates.count) pages, \(items.count) items. (\(hasPreviewItems) previews, \(hasImageItems) images)"
+    }
     
     private static func getItems(post: Post, media: [Media], images: [LibraryImage]) -> [GalleryItem] {
         let mediaCount = post.mediaCount ?? media.count

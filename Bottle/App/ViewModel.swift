@@ -92,13 +92,13 @@ extension PostProvider {
         }
     }
 
-    func entities(for postID: Post.ID) -> (User?, Post, Work?, [Media], [LibraryImage])? {
+    func entities(for postID: Post.ID) -> PostEntities? {
         guard let post = postDict[postID] else { return nil }
         let user = userDict.at(post.userID)
         let mediaIDs = postMedia[postID] ?? []
         let media = mediaIDs.compactMap { mediaDict[$0] }
         let (work, images) = multiImageWork(for: postID)
-        return (user, post, work, media, images)
+        return PostEntities(user: user, post: post, work: work, media: media, images: images)
     }
 
     func deleteWork(_ workID: Work.ID, for postID: Post.ID) {
@@ -112,6 +112,14 @@ extension PostProvider {
 //            pageImage.removeValue(forKey: media.pageID)
 //        }
     }
+}
+
+struct PostEntities {
+    let user: User?
+    let post: Post
+    let work: Work?
+    let media: [Media]
+    let images: [LibraryImage]
 }
 
 protocol MediaProvider: EntityProvider {
