@@ -92,11 +92,25 @@ private struct GalleryView: View {
         }
     }
     
-    var tagText: String {
+    var tagGroups: [(String, [String])] {
+        var dict = [String: [String]]()
+        
         if let tags = model.info?.tags {
-            return tags.sorted().joined(separator: "  ")
+            for tag in tags {
+                let parts = tag.split(separator: ":")
+                let namespace = parts.count == 2 ? String(parts[0]) : "misc"
+                let name = parts.count == 2 ? String(parts[1]) : tag
+                if dict[namespace] == nil {
+                    dict[namespace] = []
+                }
+                dict[namespace]?.append(name)
+            }
         }
-        return ""
+        
+        for (namespace, _) in dict {
+            dict[namespace] = dict[namespace]?.sorted(by: <)
+        }
+        return dict.sorted { $0.key < $1.key }
     }
     
     @ViewBuilder
@@ -133,10 +147,11 @@ private struct GalleryView: View {
                     }
                 }
                 
-//                VStack(alignment: .leading, spacing: 5) {
-//                    Text("Tags").bold()
-//                    Text(tagText).multilineTextAlignment(.leading)
-//                }
+                VStack(alignment: .leading, spacing: 5) {
+                    ForEach(tagGroups, id: \.0) { (namespace, tags) in
+                        LabeledContent(namespace.capitalized, value: tags.joined(separator: ", "))
+                    }
+                }
             }
         }
         .textSelection(.enabled)
@@ -409,7 +424,7 @@ private struct GalleryItem {
     let media: Media?
     let image: LibraryImage?
     
-    var previewImageURL: String? { image?.localSmallThumbnailURL ?? image?.localThumbnailURL ?? media?.thumbnailUrl }
+    var previewImageURL: String? { image?.localThumbnailURL ?? image?.localSmallThumbnailURL ?? media?.thumbnailUrl }
     var imageURL: String? { image?.localURL ?? image?.localThumbnailURL ?? media?.url }
     
     var hasPreview: Bool { previewImageURL != nil }
