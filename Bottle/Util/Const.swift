@@ -9,5 +9,5 @@ import Foundation
 
 enum Const {
     static let pandaBaseURL = "https://exhentai.org"
-    static let pandaDomain = "s.exhentai.org"
+    static let pandaDomain = ".exhentai.org"
 }

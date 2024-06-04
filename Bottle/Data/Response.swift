@@ -133,6 +133,7 @@ protocol PaginatedResponse {
 protocol IndefiniteResponse {
     var reachedEnd: Bool { get }
     var nextOffset: String? { get }
+    var totalItems: Int? { get }
 }
 
 struct GeneralResponse: EntityContainer, PaginatedResponse, Decodable  {

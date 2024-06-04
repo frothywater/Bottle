@@ -109,10 +109,19 @@ private struct UserRecentRow: View {
     var contextMenu: some View {
         if let params = user.feedParams {
             NavigationLink {
-                MediaGrid(model: IndefiniteMediaViewModel { offset in
-                    let request = EndpointRequest(params: params, offset: offset)
-                    return try await fetchTemporaryFeed(community: user.community, request: request)
-                })
+                Group {
+                    if user.community == "panda" {
+                        PostGrid(model: IndefinitePostViewModel { offset in
+                            let request = EndpointRequest(params: params, offset: offset)
+                            return try await fetchTemporaryFeed(community: user.community, request: request)
+                        })
+                    } else {
+                        MediaGrid(model: IndefiniteMediaViewModel { offset in
+                            let request = EndpointRequest(params: params, offset: offset)
+                            return try await fetchTemporaryFeed(community: user.community, request: request)
+                        })
+                    }
+                }
                 .id(MediaGridID.temporaryUser(user.id))
                 .navigationTitle("Posts by \(user.name ?? user.userId) at \(user.community.capitalized)")
             } label: {

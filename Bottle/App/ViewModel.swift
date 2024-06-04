@@ -272,6 +272,7 @@ protocol IndefiniteLoader: ContentLoader {
     var startedLoading: Bool { get set }
     var reachedEnd: Bool { get set }
     var nextOffset: String? { get set }
+    var totalItems: Int? { get set }
 }
 
 extension IndefiniteLoader {
@@ -279,12 +280,16 @@ extension IndefiniteLoader {
 
     var finishedLoading: Bool { reachedEnd }
 
-    var message: String { reachedEnd ? "No more items" : "More items" }
+    var message: String {
+        (reachedEnd ? "No more items" : "More items") +
+        ((totalItems != nil) ? ", \(totalItems!) in total" : "")
+    }
 
     func updateLoader(_ response: IndefiniteResponse) {
         startedLoading = true
         reachedEnd = response.reachedEnd
         nextOffset = response.nextOffset
+        totalItems = response.totalItems
     }
 }
 
@@ -393,6 +398,42 @@ class PaginatedUserViewModel: UserProvider, PaginatedLoader, ObservableObject {
     }
 }
 
+class IndefinitePostViewModel: PostProvider, IndefiniteLoader, ObservableObject {
+    let orderByWork: Bool
+    let fetch: (_: String?) async throws -> EndpointResponse
+
+    var userDict = [User.ID: User]()
+    var postDict = [Post.ID: Post]()
+    var mediaDict = [Media.ID: Media]()
+    var workDict = [Work.ID: Work]()
+    var imageDict = [LibraryImage.ID: LibraryImage]()
+
+    var postMedia = [Post.ID: [Media.ID]]()
+    var workImages = [Work.ID: [LibraryImage.ID]]()
+    var pageMedia = [PageID: Media.ID]()
+    var pageWork = [PageID: Work.ID]()
+    
+    @Published var postIDs = [Post.ID]()
+    @Published var postWork = [Post.ID: Work.ID]()
+
+    @Published var startedLoading = false
+    @Published var reachedEnd = false
+    @Published var loading = false
+    var nextOffset: String?
+    var totalItems: Int?
+
+    init(orderByWork: Bool = false, fetch: @escaping (_: String?) async throws -> EndpointResponse) {
+        self.orderByWork = orderByWork
+        self.fetch = fetch
+    }
+
+    func update(_ response: EndpointResponse) {
+        updateEntities(response)
+        updatePost(response)
+        updateLoader(response)
+    }
+}
+
 class IndefiniteMediaViewModel: MediaProvider, IndefiniteLoader, ObservableObject {
     let orderByWork: Bool
     let fetch: (_: String?) async throws -> EndpointResponse
@@ -415,6 +456,7 @@ class IndefiniteMediaViewModel: MediaProvider, IndefiniteLoader, ObservableObjec
     @Published var reachedEnd = false
     @Published var loading = false
     var nextOffset: String?
+    var totalItems: Int?
 
     init(orderByWork: Bool = false, fetch: @escaping (_: String?) async throws -> EndpointResponse) {
         self.orderByWork = orderByWork

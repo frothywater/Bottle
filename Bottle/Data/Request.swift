@@ -16,6 +16,7 @@ enum EndpointParams: Encodable {
     case twitter(TwitterParams)
     case pixiv(PixivParams)
     case yandere(YandereParams)
+    case panda(PandaParams)
 
     // Flatten the enum for encoding
     func encode(to encoder: Encoder) throws {
@@ -26,6 +27,8 @@ enum EndpointParams: Encodable {
         case let .pixiv(params):
             try container.encode(params)
         case let .yandere(params):
+            try container.encode(params)
+        case let .panda(params):
             try container.encode(params)
         }
     }
@@ -64,6 +67,78 @@ enum YandereParams: Encodable {
     case pool(poolId: Int)
 }
 
+enum PandaParams: Encodable {
+    case search(option: SearchOption)
+    case favorites(option: FavoriteSearchOption)
+    
+    struct SearchOption: Encodable {
+        let keyword: String?
+        let categories: [GalleryCategory]
+        let searchName: Bool
+        let searchTags: Bool
+        let searchDescription: Bool
+        let searchTorrent: Bool
+        let searchLowPowerTags: Bool
+        let searchDownvotedTags: Bool
+        let searchExpunged: Bool
+        let requireTorrent: Bool
+        let disableLanguageFilter: Bool
+        let disableUploaderFilter: Bool
+        let disableTagsFilter: Bool
+        let minRating: Int?
+        let minPages: Int?
+        let maxPages: Int?
+        
+        init(keyword: String? = nil, categories: [PandaParams.GalleryCategory] = GalleryCategory.allCases, searchName: Bool = true, searchTags: Bool = true, searchDescription: Bool = false, searchTorrent: Bool = false, searchLowPowerTags: Bool = false, searchDownvotedTags: Bool = false, searchExpunged: Bool = false, requireTorrent: Bool = false, disableLanguageFilter: Bool = false, disableUploaderFilter: Bool = false, disableTagsFilter: Bool = false, minRating: Int? = nil, minPages: Int? = nil, maxPages: Int? = nil) {
+            self.keyword = keyword
+            self.categories = categories
+            self.searchName = searchName
+            self.searchTags = searchTags
+            self.searchDescription = searchDescription
+            self.searchTorrent = searchTorrent
+            self.searchLowPowerTags = searchLowPowerTags
+            self.searchDownvotedTags = searchDownvotedTags
+            self.searchExpunged = searchExpunged
+            self.requireTorrent = requireTorrent
+            self.disableLanguageFilter = disableLanguageFilter
+            self.disableUploaderFilter = disableUploaderFilter
+            self.disableTagsFilter = disableTagsFilter
+            self.minRating = minRating
+            self.minPages = minPages
+            self.maxPages = maxPages
+        }
+    }
+    
+    struct FavoriteSearchOption: Encodable {
+        let keyword: String?
+        let categoryIndex: Int?
+        let searchName: Bool
+        let searchTags: Bool
+        let searchNote: Bool
+        
+        init(keyword: String? = nil, categoryIndex: Int? = nil, searchName: Bool = true, searchTags: Bool = true, searchNote: Bool = true) {
+            self.keyword = keyword
+            self.categoryIndex = categoryIndex
+            self.searchName = searchName
+            self.searchTags = searchTags
+            self.searchNote = searchNote
+        }
+    }
+    
+    enum GalleryCategory: String, Encodable, CaseIterable {
+        case misc = "Misc"
+        case doujinshi = "Doujinshi"
+        case manga = "Manga"
+        case artistCG = "ArtistCG"
+        case gameCG = "GameCG"
+        case imageSet = "ImageSet"
+        case cosplay = "Cosplay"
+        case asianPorn = "AsianPorn"
+        case nonH = "NonH"
+        case western = "Western"
+    }
+}
+
 // MARK: - Helpers
 
 extension User {
@@ -77,6 +152,8 @@ extension User {
             return .pixiv(.posts(userId: userId, type: .illust))
         case "yandere":
             return .yandere(.search(query: userId))
+        case "panda":
+            return .panda(.search(option: .init(keyword: "artist:\"\(userId)$\"")))
         default:
             return nil
         }
