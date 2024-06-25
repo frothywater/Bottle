@@ -18,9 +18,8 @@ struct MediaGrid<VM: MediaProvider & ContentLoader & ObservableObject>: View {
             LazyVGrid(columns: columns, spacing: 10) {
                 if model.startedLoading {
                     ForEach(Array(model.mediaIDs.enumerated()), id: \.element) { index, mediaID in
-                        if let (user, post, media, work, image) = model.entities(for: mediaID) {
-                            MediaView(mediaID: mediaID, model: model,
-                                      user: user, post: post, media: media, work: work, image: image)
+                        if let entities = model.entities(for: mediaID) {
+                            MediaView(entities: entities, model: model)
                                 .task {
                                     if index == model.mediaIDs.count - 1 { await model.load() }
                                 }
@@ -34,9 +33,6 @@ struct MediaGrid<VM: MediaProvider & ContentLoader & ObservableObject>: View {
         }
         .contentMargins(.bottom, 30)
         .overlay(alignment: .bottom) { StatusBar(message: model.message, columnCount: $columnCount) }
-        #if os(iOS)
-            .toolbar(.hidden)
-        #endif
     }
 }
 

@@ -33,9 +33,6 @@ struct PostGrid<VM: PostProvider & ContentLoader & ObservableObject>: View {
         }
         .contentMargins(.bottom, 30)
         .overlay(alignment: .bottom) { StatusBar(message: model.message, columnCount: $columnCount) }
-        #if os(iOS)
-            .toolbar(.hidden)
-        #endif
     }
 }
 

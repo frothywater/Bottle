@@ -23,6 +23,8 @@ protocol EntityProvider: AnyObject {
     var pageWork: [PageID: Work.ID] { get set }
     var postWork: [Post.ID: Work.ID] { get set }
 //    var pageImage: [PageID: LibraryImage.ID] { get set }
+    
+    var tagUser: [String: User.ID] { get set }
 }
 
 extension EntityProvider {
@@ -54,6 +56,13 @@ extension EntityProvider {
 //                  let pageID = image.pageID(for: work) else { continue }
 //            pageImage[pageID] = image.id
 //        }
+        
+        // Map user tag to user
+        for user in response.users ?? [] {
+            if let tagName = user.tagName {
+                tagUser[tagName] = user.id
+            }
+        }
     }
 
     /// For single-image works, one media corresponds to one work and image.
@@ -98,7 +107,8 @@ extension PostProvider {
         let mediaIDs = postMedia[postID] ?? []
         let media = mediaIDs.compactMap { mediaDict[$0] }
         let (work, images) = multiImageWork(for: postID)
-        return PostEntities(user: user, post: post, work: work, media: media, images: images)
+        let taggedUsers = post.tags?.compactMap { userDict.at(tagUser[$0]) }
+        return PostEntities(user: user, taggedUsers: taggedUsers, post: post, work: work, media: media, images: images)
     }
 
     func deleteWork(_ workID: Work.ID, for postID: Post.ID) {
@@ -116,6 +126,7 @@ extension PostProvider {
 
 struct PostEntities {
     let user: User?
+    let taggedUsers: [User]?
     let post: Post
     let work: Work?
     let media: [Media]
@@ -146,12 +157,13 @@ extension MediaProvider {
         }
     }
 
-    func entities(for mediaID: Media.ID) -> (User?, Post?, Media, Work?, LibraryImage?)? {
+    func entities(for mediaID: Media.ID) -> MediaEntities? {
         guard let media = mediaDict[mediaID] else { return nil }
         let post = postDict[media.postID]
         let user = userDict.at(post?.userID)
         let (work, image) = singleImageWork(for: mediaID)
-        return (user, post, media, work, image)
+        let taggedUsers = post?.tags?.compactMap { userDict.at(tagUser[$0]) }
+        return MediaEntities(user: user, taggedUsers: taggedUsers, post: post, media: media, work: work, image: image)
     }
 
     func deleteWork(_ workID: Work.ID, for mediaID: Media.ID) {
@@ -161,6 +173,15 @@ extension MediaProvider {
         workDict.removeValue(forKey: workID)
         pageWork.removeValue(forKey: media.pageID)
     }
+}
+
+struct MediaEntities {
+    let user: User?
+    let taggedUsers: [User]?
+    let post: Post?
+    let media: Media
+    let work: Work?
+    let image: LibraryImage?
 }
 
 protocol UserProvider: EntityProvider {
@@ -175,29 +196,39 @@ extension UserProvider {
         userIDs.append(contentsOf: response.users?.map(\.id) ?? [])
     }
 
-    func entities(for userID: User.ID) -> (User, [(Media, LibraryImage?)])? {
+    func entities(for userID: User.ID) -> UserEntities? {
         guard let user = userDict[userID] else { return nil }
         let postIDs = userPosts.at(userID) ?? []
         
-        var mediaImages = [(Media, LibraryImage?)]()
+        var items = [UserEntities.RecentItem]()
         for postID in postIDs {
             if postWork[postID] == nil {
                 // Single-image work
                 for mediaID in postMedia[postID] ?? [] {
                     let media = mediaDict[mediaID]!
                     let (_, image) = singleImageWork(for: mediaID)
-                    mediaImages.append((media, image))
+                    items.append(.init(media: media, image: image))
                 }
             } else {
                 // Multi-image work
                 if let mediaID = postMedia[postID]?.first, let media = mediaDict[mediaID] {
                     let (_, images) = multiImageWork(for: postID)
-                    mediaImages.append((media, images.first))
+                    items.append(.init(media: media, image: images.first))
                 }
             }
         }
 
-        return (user, mediaImages)
+        return UserEntities(user: user, items: items)
+    }
+}
+
+struct UserEntities {
+    let user: User
+    let items: [RecentItem]
+    
+    struct RecentItem {
+        let media: Media
+        let image: LibraryImage?
     }
 }
 
@@ -309,6 +340,7 @@ class PaginatedPostViewModel: PostProvider, PaginatedLoader, ObservableObject {
     var workImages = [Work.ID: [LibraryImage.ID]]()
     var pageMedia = [PageID: Media.ID]()
     var pageWork = [PageID: Work.ID]()
+    var tagUser = [String : User.ID]()
     
     @Published var postIDs = [Post.ID]()
     @Published var postWork = [Post.ID: Work.ID]()
@@ -344,6 +376,7 @@ class PaginatedMediaViewModel: MediaProvider, PaginatedLoader, ObservableObject 
     var workImages = [Work.ID: [LibraryImage.ID]]()
     var pageMedia = [PageID: Media.ID]()
     var postWork = [Post.ID: Work.ID]()
+    var tagUser = [String : User.ID]()
     
     @Published var mediaIDs = [Media.ID]()
     @Published var pageWork = [PageID: Work.ID]()
@@ -378,6 +411,7 @@ class PaginatedUserViewModel: UserProvider, PaginatedLoader, ObservableObject {
     var workImages = [Work.ID: [LibraryImage.ID]]()
     var userPosts = [User.ID: [Post.ID]]()
     var postWork = [Post.ID: Work.ID]()
+    var tagUser = [String : User.ID]()
     
     @Published var userIDs = [User.ID]()
     @Published var pageWork = [PageID: Work.ID]()
@@ -412,6 +446,7 @@ class IndefinitePostViewModel: PostProvider, IndefiniteLoader, ObservableObject 
     var workImages = [Work.ID: [LibraryImage.ID]]()
     var pageMedia = [PageID: Media.ID]()
     var pageWork = [PageID: Work.ID]()
+    var tagUser = [String : User.ID]()
     
     @Published var postIDs = [Post.ID]()
     @Published var postWork = [Post.ID: Work.ID]()
@@ -448,6 +483,7 @@ class IndefiniteMediaViewModel: MediaProvider, IndefiniteLoader, ObservableObjec
     var workImages = [Work.ID: [LibraryImage.ID]]()
     var pageMedia = [PageID: Media.ID]()
     var postWork = [Post.ID: Work.ID]()
+    var tagUser = [String : User.ID]()
     
     @Published var mediaIDs = [Media.ID]()
     @Published var pageWork = [PageID: Work.ID]()

@@ -16,8 +16,8 @@ struct UserList<VM: UserProvider & ContentLoader & ObservableObject>: View {
         List(selection: $selection) {
             if model.startedLoading {
                 ForEach(Array(model.userIDs.enumerated()), id: \.element) { index, userID in
-                    if let (user, mediaImages) = model.entities(for: userID) {
-                        UserRecentRow(user: user, mediaImages: mediaImages)
+                    if let entities = model.entities(for: userID) {
+                        UserRecentRow(entities: entities)
                             .task {
                                 if index == model.userIDs.count - 1 { await model.load() }
                             }
@@ -39,8 +39,9 @@ struct UserList<VM: UserProvider & ContentLoader & ObservableObject>: View {
 
 @MainActor
 private struct UserRecentRow: View {
-    let user: User
-    let mediaImages: [(Media, LibraryImage?)]
+    let entities: UserEntities
+    
+    @State private var browsingCommunity = false
 
     var body: some View {
         VStack(alignment: .leading) {
@@ -50,9 +51,14 @@ private struct UserRecentRow: View {
         .padding([.top, .bottom], 5)
         .fixVerticalScrolling()
         .contextMenu { contextMenu }
+        .navigationDestination(isPresented: $browsingCommunity) {
+            userInCommunityDestination(user: entities.user)
+        }
     }
 
+    @ViewBuilder
     var profile: some View {
+        let user = entities.user
         HStack(spacing: 10) {
             Group {
                 LazyImage(request: user.avatarUrl?.imageRequest) { state in
@@ -68,7 +74,7 @@ private struct UserRecentRow: View {
             .overlay { Circle().stroke(.separator) }
 
             VStack(alignment: .leading) {
-                Text(user.name ?? "No name").font(.title3)
+                Text(user.name ?? user.userId).font(.title3)
                 if let username = user.username {
                     Text("@" + username).font(.caption2)
                 }
@@ -80,16 +86,16 @@ private struct UserRecentRow: View {
     var recent: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             LazyHStack(spacing: 5) {
-                ForEach(mediaImages, id: \.0.id) { media, image in
-                    recentImage(media: media, image: image)
+                ForEach(entities.items, id: \.media.id) { item in
+                    recentImage(item: item)
                 }
             }
         }
     }
 
     @ViewBuilder
-    func recentImage(media: Media, image: LibraryImage?) -> some View {
-        let url = image?.localSmallThumbnailURL ?? image?.localThumbnailURL ?? media.thumbnailUrl
+    func recentImage(item: UserEntities.RecentItem) -> some View {
+        let url = item.image?.localSmallThumbnailURL ?? item.image?.localThumbnailURL ?? item.media.thumbnailUrl
         LazyImage(request: url?.imageRequest) { state in
             if let image = state.image {
                 image.resizable().scaledToFit()
@@ -99,7 +105,7 @@ private struct UserRecentRow: View {
                 Color.clear
             }
         }
-        .fit(width: media.width, height: media.height)
+        .fit(width: item.media.width, height: item.media.height)
         .frame(height: 100)
         .cornerRadius(5)
         .overlay { RoundedRectangle(cornerRadius: 5).stroke(.separator) }
@@ -107,26 +113,11 @@ private struct UserRecentRow: View {
 
     @ViewBuilder
     var contextMenu: some View {
-        if let params = user.feedParams {
-            NavigationLink {
-                Group {
-                    if user.community == "panda" {
-                        PostGrid(model: IndefinitePostViewModel { offset in
-                            let request = EndpointRequest(params: params, offset: offset)
-                            return try await fetchTemporaryFeed(community: user.community, request: request)
-                        })
-                    } else {
-                        MediaGrid(model: IndefiniteMediaViewModel { offset in
-                            let request = EndpointRequest(params: params, offset: offset)
-                            return try await fetchTemporaryFeed(community: user.community, request: request)
-                        })
-                    }
-                }
-                .id(MediaGridID.temporaryUser(user.id))
-                .navigationTitle("Posts by \(user.name ?? user.userId) at \(user.community.capitalized)")
-            } label: {
-                Label("Browse \(user.name ?? user.userId) at \(user.community.capitalized)", systemImage: "global")
-            }
+        let user = entities.user
+        Button {
+            browsingCommunity.toggle()
+        } label: {
+            Label("Browse \"\(user.name ?? user.userId)\" Posts at \(user.community.capitalized)", systemImage: "globe")
         }
     }
 }

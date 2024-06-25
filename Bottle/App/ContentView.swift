@@ -79,7 +79,7 @@ struct ContentView: View {
                     ForEach(feeds, id: \.destination) { feed in
                         // Click each feed to view all posts in that feed.
                         // Grouped view available.
-                        Label(feed.name.capitalized, systemImage: "doc.text.image")
+                        Label(feed.displayName, systemImage: "doc.text.image")
                             .foregroundColor(.primary)
                     }
                 } label: {
@@ -134,14 +134,15 @@ struct ContentView: View {
                 PostGrid(model: PaginatedPostViewModel(orderByWork: true) { page in
                     try await fetchCommunityWorks(community: community, page: page)
                 })
+                .id(PostGridID.library(community))
             } else {
                 MediaGrid(model: PaginatedMediaViewModel(orderByWork: true) { page in
                     try await fetchCommunityWorks(community: community, page: page)
                 })
+                .id(MediaGridID.library(community))
             }
         }
-        .id(MediaGridID.library(community))
-        .navigationTitle("Library: \(community.capitalized)")
+        .navigationTitle("\(community.capitalized) Works in Library")
     }
     
     private func libraryUserList(community: String, selection: Binding<User.ID?>) -> some View {
@@ -149,7 +150,7 @@ struct ContentView: View {
             try await fetchArchivedUsers(community: community, page: page)
         })
         .id(UserListID.library(community))
-        .navigationTitle("Artists in Library: \(community.capitalized)")
+        .navigationTitle("\(community.capitalized) Artists in Library")
     }
     
     @ViewBuilder
@@ -160,14 +161,15 @@ struct ContentView: View {
                     PostGrid(model: PaginatedPostViewModel { page in
                         try await fetchArchivedUserPosts(community: community, userID: userID.userId, page: page)
                     })
+                    .id(PostGridID.libraryByUser(userID))
                 } else {
                     MediaGrid(model: PaginatedMediaViewModel { page in
                         try await fetchArchivedUserPosts(community: community, userID: userID.userId, page: page)
                     })
+                    .id(MediaGridID.libraryByUser(userID))
                 }
             }
-            .id(MediaGridID.libraryByUser(userID))
-            .navigationTitle("Works in Library: \(community.capitalized)")
+            .navigationTitle("\(community.capitalized) Works by Artist in Library")
         }
     }
     
@@ -177,14 +179,15 @@ struct ContentView: View {
                 PostGrid(model: PaginatedPostViewModel { page in
                     try await fetchPosts(community: feed.community, feedID: feed.feedId, page: page)
                 })
+                .id(PostGridID.feed(feed.id))
             } else {
                 MediaGrid(model: PaginatedMediaViewModel { page in
                     try await fetchPosts(community: feed.community, feedID: feed.feedId, page: page)
                 })
+                .id(MediaGridID.feed(feed.id))
             }
         }
-        .id(MediaGridID.feed(feed.id))
-        .navigationTitle("Feed: \(feed.name.capitalized)")
+        .navigationTitle("\(feed.community.capitalized) Feed \(feed.displayName)")
     }
     
     private func feedUserList(feed: Feed, selection: Binding<User.ID?>) -> some View {
@@ -192,7 +195,7 @@ struct ContentView: View {
             try await fetchFeedUsers(community: feed.community, feedID: feed.feedId, page: page)
         })
         .id(UserListID.feed(feed.id))
-        .navigationTitle("Users in Feed: \(feed.name.capitalized)")
+        .navigationTitle("\(feed.community.capitalized) Artists in Feed \(feed.displayName)")
     }
     
     @ViewBuilder
@@ -203,14 +206,15 @@ struct ContentView: View {
                     PostGrid(model: PaginatedPostViewModel { page in
                         try await fetchFeedUserPosts(community: feed.community, feedID: feed.feedId, userID: userID.userId, page: page)
                     })
+                    .id(PostGridID.feedByUser(feed.id, userID))
                 } else {
                     MediaGrid(model: PaginatedMediaViewModel { page in
                         try await fetchFeedUserPosts(community: feed.community, feedID: feed.feedId, userID: userID.userId, page: page)
                     })
+                    .id(MediaGridID.feedByUser(feed.id, userID))
                 }
             }
-            .id(MediaGridID.feedByUser(feed.id, userID))
-            .navigationTitle("Posts in Feed: \(feed.name.capitalized)")
+            .navigationTitle("\(feed.community.capitalized) Posts by Artist in Feed \(feed.displayName)")
         }
     }
     
@@ -250,4 +254,49 @@ struct ContentView: View {
         cookies.forEach { HTTPCookieStorage.shared.setCookie($0) }
         print("Panda cookies set. \(cookies)")
     }
+}
+
+// MARK: - Global Destinations
+
+@ViewBuilder
+func userInCommunityDestination(user: User) -> some View {
+    let community = user.community
+    if let params = user.feedParams {
+        Group {
+            if community == "panda" {
+                PostGrid(model: IndefinitePostViewModel { offset in
+                    let request = EndpointRequest(params: params, offset: offset)
+                    return try await fetchTemporaryFeed(community: community, request: request)
+                })
+                .id(PostGridID.temporaryUser(user.id))
+                
+            } else {
+                MediaGrid(model: IndefiniteMediaViewModel { offset in
+                    let request = EndpointRequest(params: params, offset: offset)
+                    return try await fetchTemporaryFeed(community: community, request: request)
+                })
+                .id(MediaGridID.temporaryUser(user.id))
+            }
+        }
+        .navigationTitle("\(community.capitalized) Posts by \"\(user.name ?? user.userId)\"")
+    }
+}
+
+@ViewBuilder
+func userInLibraryDestination(user: User) -> some View {
+    let community = user.community
+    Group {
+        if user.community == "panda" {
+            PostGrid(model: PaginatedPostViewModel { page in
+                try await fetchArchivedUserPosts(community: community, userID: user.userId, page: page)
+            })
+            .id(PostGridID.libraryByUser(user.id))
+        } else {
+            MediaGrid(model: PaginatedMediaViewModel { page in
+                try await fetchArchivedUserPosts(community: community, userID: user.userId, page: page)
+            })
+            .id(MediaGridID.libraryByUser(user.id))
+        }
+    }
+    .navigationTitle("\(community.capitalized) Works by \"\(user.name ?? user.userId)\" in Library")
 }

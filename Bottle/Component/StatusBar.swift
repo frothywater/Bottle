@@ -33,7 +33,7 @@ struct StatusBar: View {
         .frame(height: 30)
         .frame(maxWidth: .infinity)
         .padding([.leading, .trailing], 15)
-        .background { Rectangle().fill(.regularMaterial) }
+        .background { Rectangle().fill(.bar) }
     }
 }
 

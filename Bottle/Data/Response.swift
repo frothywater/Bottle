@@ -45,7 +45,9 @@ struct AccountInfo: Decodable {
 struct Feed: Decodable {
     let feedId: Int
     let community: String
-    let name: String
+    let name: String?
+    let watching: Bool
+    let description: String
 }
 
 struct Post: Decodable {
@@ -55,6 +57,7 @@ struct Post: Decodable {
     let text: String
     let mediaCount: Int?
     let thumbnailUrl: String?
+    let tags: [String]?
     let createdDate: Date
     let addedDate: Date?
     let extra: PostExtra?
@@ -65,6 +68,7 @@ struct User: Decodable {
     let community: String
     let name: String?
     let username: String?
+    let tagName: String?
     let avatarUrl: String?
     let description: String?
     let url: String?
@@ -276,6 +280,7 @@ extension CommunityMetadata {
 }
 
 extension Feed {
+    var displayName: String { name ?? description }
     var destination: SidebarDestination { .feed(community: community, id: feedId) }
 }
 
@@ -286,10 +291,10 @@ extension CommunityMetadata: Identifiable {
 extension Feed: Identifiable {
     struct FeedID: Hashable {
         let community: String
-        let name: String
+        let feedId: Int
     }
 
-    var id: FeedID { .init(community: community, name: name) }
+    var id: FeedID { .init(community: community, feedId: feedId) }
 }
 
 extension User: Identifiable {
@@ -309,6 +314,17 @@ extension Post: Identifiable {
 
     var id: PostID { .init(community: community, postId: postId) }
     var userID: User.ID? { userId.map { .init(community: community, userId: $0) } }
+}
+
+extension Post {
+    var displayText: String {
+        let result = if text.contains("https://") {
+            String(text.split(separator: "https://", omittingEmptySubsequences: false).first ?? "")
+        } else {
+            text
+        }
+        return result.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
 }
 
 extension Media: Identifiable {

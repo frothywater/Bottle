@@ -13,6 +13,10 @@ import SwiftUI
 struct PostView: View {
     let entities: PostEntities
     let model: PostProvider
+    
+    @State private var browsingUser: User?
+    @State private var browsingLibraryUser = false
+    @State private var browsingCommunityUser = false
 
     var body: some View {
         NavigationLink {
@@ -24,6 +28,17 @@ struct PostView: View {
         .overlay { RoundedRectangle(cornerRadius: 10).stroke(.separator) }
         .overlay(alignment: .topTrailing) {
             ImportButton(post: entities.post, work: entities.work, outerModel: model)
+        }
+        .contextMenu { contextMenu }
+        .navigationDestination(isPresented: $browsingLibraryUser) {
+            if let user = browsingUser {
+                userInLibraryDestination(user: user)
+            }
+        }
+        .navigationDestination(isPresented: $browsingCommunityUser) {
+            if let user = browsingUser {
+                userInCommunityDestination(user: user)
+            }
         }
     }
 
@@ -41,14 +56,79 @@ struct PostView: View {
                     .draggable(image)
             } else if state.error != nil {
                 Color.clear.overlay { Image(systemName: "photo") }
+                    .frame(minHeight: 300)
             } else {
                 Color.clear
+                    .frame(minHeight: 300)
             }
         }
         .fit(width: width, height: height)
-        .frame(minHeight: 300)
+        .overlay(alignment: .bottom) { infoOverlay }
         .contentShape(Rectangle())
         .cornerRadius(10)
+    }
+    
+    @ViewBuilder
+    var infoOverlay: some View {
+        let title = entities.post.displayText
+        let author = users.map { $0.name ?? $0.userId }.joined(separator: ", ")
+        if !title.isEmpty || !author.isEmpty {
+            VStack(alignment: .leading, spacing: 5) {
+                if !title.isEmpty {
+                    Text(title).font(.headline)
+                        .lineLimit(2, reservesSpace: false)
+                        .multilineTextAlignment(.leading)
+                }
+                if !author.isEmpty {
+                    Text(author).font(.subheadline)
+                        .lineLimit(1)
+                        .multilineTextAlignment(.leading)
+                }
+            }
+            .padding(10)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(.ultraThinMaterial)
+        }
+    }
+    
+    var users: [User] {
+        var result = [User]()
+        if let user = entities.user { result.append(user) }
+        if let users = entities.taggedUsers { result.append(contentsOf: users) }
+        return result
+    }
+    
+    @ViewBuilder
+    var contextMenu: some View {
+        let users = users
+        if users.count == 1 {
+            let user = users.first!
+            Button("Browse \"\(user.name ?? user.userId)\" Works in Library", systemImage: "photo.on.rectangle") {
+                browsingUser = user
+                browsingLibraryUser = true
+            }
+            Button("Browse \"\(user.name ?? user.userId)\" Posts at \(user.community.capitalized)", systemImage: "globe") {
+                browsingUser = user
+                browsingCommunityUser = true
+            }
+        } else if users.count > 1 {
+            Menu("Browse Artist Works in Library", systemImage: "photo.on.rectangle") {
+                ForEach(users) { user in
+                    Button(user.name ?? user.userId) {
+                        browsingUser = user
+                        browsingLibraryUser = true
+                    }
+                }
+            }
+            Menu("Browse Artist Posts at \(entities.post.community.capitalized)", systemImage: "globe") {
+                ForEach(users) { user in
+                    Button(user.name ?? user.userId) {
+                        browsingUser = user
+                        browsingCommunityUser = true
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -82,6 +162,7 @@ private struct GalleryView: View {
         }
         .contentMargins(.bottom, 30)
         .overlay(alignment: .bottom) { StatusBar(message: model.message, columnCount: $columnCount) }
+        .navigationTitle(entities.post.text)
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
         #endif
@@ -95,7 +176,7 @@ private struct GalleryView: View {
     var tagGroups: [(String, [String])] {
         var dict = [String: [String]]()
         
-        if let tags = model.info?.tags {
+        if let tags = model.post.tags {
             for tag in tags {
                 let parts = tag.split(separator: ":")
                 let namespace = parts.count == 2 ? String(parts[0]) : "misc"
@@ -118,16 +199,16 @@ private struct GalleryView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .top, spacing: 10) {
                 VStack(alignment: .leading, spacing: 5) {
-                    Text(model.post.text).font(.title)
+                    Text(model.post.text).font(.system(.title, weight: .semibold))
                     if let englishTitle = model.info?.englishTitle {
-                        Text(englishTitle).font(.title2).foregroundStyle(.secondary)
+                        Text(englishTitle).font(.title3).foregroundStyle(.secondary)
                     }
                 }
                 Spacer()
                 ImportButton(post: entities.post, work: entities.work, outerModel: outerModel)
             }
             
-            HStack(alignment: .firstTextBaseline, spacing: 10) {
+            HStack(alignment: .firstTextBaseline, spacing: 20) {
                 VStack(alignment: .leading, spacing: 5) {
                     LabeledContent("Post ID", value: model.post.postId)
                     LabeledContent("Created date", value: model.post.createdDate.formatted())
@@ -137,9 +218,9 @@ private struct GalleryView: View {
                     }
                     if let info = model.info {
                         LabeledContent("Category", value: info.category)
-                        LabeledContent("Uploader", value: info.uploader)
+                        if !info.uploader.isEmpty { LabeledContent("Uploader", value: info.uploader) }
                         LabeledContent("Media count", value: model.items.count.formatted())
-                        if let parent = info.parent { LabeledContent("Parent", value: parent) }
+                        if let parent = info.parent, parent != "" { LabeledContent("Parent", value: parent) }
                         if let visible = info.visible { LabeledContent("Visible", value: visible.description) }
                         if let language = info.language { LabeledContent("Language", value: language) }
                         if let fileSize = info.fileSize { LabeledContent("File size", value: fileSize.formatted()) }
@@ -153,6 +234,7 @@ private struct GalleryView: View {
                     }
                 }
             }
+            .multilineTextAlignment(.trailing)
         }
         .textSelection(.enabled)
     }
@@ -167,8 +249,10 @@ private struct GalleryView: View {
                         LazyImage(request: item.previewImageURL?.imageRequest) { state in
                             if let image = state.image {
                                 image.resizable().scaledToFit()
+                                    .draggable(image)
                             } else if state.error != nil {
                                 Color.clear.overlay { Image(systemName: "photo") }
+                                    .frame(minHeight: 300)
                             } else {
                                 Color.clear.overlay {
                                     VStack(spacing: 10) {
@@ -176,6 +260,7 @@ private struct GalleryView: View {
                                         Text("Loading…").foregroundStyle(.secondary)
                                     }
                                 }
+                                .frame(minHeight: 300)
                             }
                         }
                         .fit(width: item.width, height: item.height)
@@ -184,6 +269,7 @@ private struct GalleryView: View {
                             ProgressView()
                             Text("Fetching…").foregroundStyle(.secondary)
                         }
+                        .frame(minHeight: 300)
                         .task(id: item.index) {
                             if model.needFetchPreview(index: item.index) {
                                 await model.fetchPreview(index: item.index)
@@ -191,7 +277,7 @@ private struct GalleryView: View {
                         }
                     }
                 }
-                .frame(maxWidth: .infinity, minHeight: 300)
+                .frame(maxWidth: .infinity)
                 .contentShape(Rectangle())
                 .cornerRadius(10)
                 .overlay { RoundedRectangle(cornerRadius: 10).stroke(.separator) }
@@ -344,6 +430,7 @@ private struct GalleryMediaView: View {
             LazyImage(request: url.imageRequest) { state in
                 if let image = state.image {
                     image.resizable().scaledToFit()
+                        .draggable(image)
                 } else if state.error != nil {
                     Image(systemName: "photo")
                 } else {
