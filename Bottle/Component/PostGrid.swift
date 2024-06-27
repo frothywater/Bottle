@@ -31,7 +31,7 @@ struct PostGrid<VM: PostProvider & ContentLoader & ObservableObject>: View {
             }
             .padding(5)
         }
-        .contentMargins(.bottom, 30)
+        .safeAreaPadding(.bottom, 30)
         .overlay(alignment: .bottom) { StatusBar(message: model.message, columnCount: $columnCount) }
     }
 }

@@ -36,10 +36,3 @@ struct StatusBar: View {
         .background { Rectangle().fill(.bar) }
     }
 }
-
-struct StatusBar_Previews: PreviewProvider {
-    static var previews: some View {
-        StatusBar(message: "message")
-        StatusBar(message: "message", columnCount: .initial(3))
-    }
-}

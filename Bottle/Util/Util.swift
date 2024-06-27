@@ -30,11 +30,7 @@ extension String {
     }
 }
 
-extension Binding {
-    static func initial(_ value: Value) -> Binding<Value> {
-        return Binding(get: { value }, set: { _ in })
-    }
-    
+extension Binding {    
     /// For Int-valued SwiftUI Slider
     /// https://stackoverflow.com/questions/65736518/how-do-i-create-a-slider-in-swiftui-for-an-int-type-property
     static func convert<TInt, TFloat>(from intBinding: Binding<TInt>) -> Binding<TFloat>

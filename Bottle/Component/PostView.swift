@@ -160,7 +160,7 @@ private struct GalleryView: View {
             }
             .padding(20)
         }
-        .contentMargins(.bottom, 30)
+        .safeAreaPadding(.bottom, 10)
         .overlay(alignment: .bottom) { StatusBar(message: model.message, columnCount: $columnCount) }
         .navigationTitle(entities.post.text)
         #if os(iOS)
@@ -491,10 +491,10 @@ private struct ImportButton: View {
             do {
                 if imported {
                     guard let workID = work?.id else { return }
-                    try await deleteWork(workID: workID)
+                    try await Client.deleteWork(workID: workID)
                     outerModel.deleteWork(workID, for: post.id)
                 } else {
-                    let response = try await addWork(community: post.community, postID: post.postId, page: nil)
+                    let response = try await Client.addWork(community: post.community, postID: post.postId, page: nil)
                     outerModel.updateEntities(response)
                 }
             } catch {
@@ -618,7 +618,7 @@ private class GalleryViewModel {
         do {
             pageStates[0] = .loading
             print("Fetching detail for post \(post.postId)")
-            let response = try await fetchPandaPost(id: post.postId)
+            let response = try await Client.fetchPandaPost(id: post.postId)
             
             if let post = response.posts?.first {
                 self.post = post
@@ -654,7 +654,7 @@ private class GalleryViewModel {
         do {
             pageStates[pageIndex] = .loading
             print("Fetching preview for post \(post.postId), page \(pageIndex), media, \(index)")
-            let response = try await fetchPandaPost(id: post.postId, page: pageIndex)
+            let response = try await Client.fetchPandaPost(id: post.postId, page: pageIndex)
             
             if let media = response.media {
                 updateMedia(media: media)
@@ -688,7 +688,7 @@ private class GalleryViewModel {
         do {
             loadingItem[index] = true
             print("Fetching image for post \(post.postId), media \(index)")
-            let response = try await fetchPandaMedia(id: post.postId, page: index)
+            let response = try await Client.fetchPandaMedia(id: post.postId, page: index)
             
             if let media = response.media?.first {
                 updateSingleMedia(media: media)

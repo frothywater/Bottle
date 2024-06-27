@@ -28,7 +28,7 @@ struct UserList<VM: UserProvider & ContentLoader & ObservableObject>: View {
             }
         }
         .listStyle(.inset)
-        .contentMargins(.bottom, 30)
+        .safeAreaPadding(.bottom, 30)
         .scrollContentBackground(.hidden)
         .overlay(alignment: .bottom) { StatusBar(message: model.message) }
         #if os(iOS)

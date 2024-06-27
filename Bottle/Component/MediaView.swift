@@ -140,7 +140,6 @@ private struct ImageSheet: View {
         LazyImage(request: url?.imageRequest) { state in
             if let image = state.image {
                 image.resizable().scaledToFit()
-                    .draggable(image)
                     .zoomable()
             } else if state.error != nil {
                 Image(systemName: "photo")
@@ -267,10 +266,10 @@ private struct ImportButton: View {
             do {
                 if imported {
                     guard let workID = work?.id else { return }
-                    try await deleteWork(workID: workID)
+                    try await Client.deleteWork(workID: workID)
                     model.deleteWork(workID, for: media.id)
                 } else {
-                    let response = try await addWork(community: media.community, postID: media.postId, page: media.pageIndex)
+                    let response = try await Client.addWork(community: media.community, postID: media.postId, page: media.pageIndex)
                     model.updateEntities(response)
                     model.updateMedia(response)
                 }

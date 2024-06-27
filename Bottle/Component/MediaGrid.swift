@@ -29,9 +29,8 @@ struct MediaGrid<VM: MediaProvider & ContentLoader & ObservableObject>: View {
                     Color.clear.task { await model.load() }
                 }
             }
-            .padding(5)
         }
-        .contentMargins(.bottom, 30)
+        .safeAreaPadding(.bottom, 30)
         .overlay(alignment: .bottom) { StatusBar(message: model.message, columnCount: $columnCount) }
     }
 }
@@ -44,4 +43,5 @@ enum MediaGridID: Hashable {
     case feed(Feed.ID)
     case feedByUser(Feed.ID, User.ID)
     case temporaryUser(User.ID)
+    case album(Album.ID)
 }
