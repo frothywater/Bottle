@@ -28,6 +28,9 @@ extension String {
     var percentEncoded: String {
         addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? self
     }
+    
+    var isSafeCommunity: Bool { self == "twitter" }
+    var isSafeFeed: Bool { !self.hasSuffix("R") }
 }
 
 extension Binding {    

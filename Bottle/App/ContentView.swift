@@ -17,6 +17,8 @@ struct ContentView: View {
 
     @State private var expandedLibraryCommunity = true
 
+    @AppStorage("safeMode") private var safeMode: Bool = true
+
     var body: some View {
         Group {
             if showingGroupedUser {
@@ -68,8 +70,10 @@ struct ContentView: View {
                 ForEach(appModel.metadata?.communities ?? [], id: \.destination) { community in
                     // Click each community in the library to view all posts in that community.
                     // Always show grouped user view.
-                    Label(community.name.capitalized, systemImage: "square.stack")
-                        .foregroundColor(.primary)
+                    if !safeMode || community.name.isSafeCommunity {
+                        Label(community.name.capitalized, systemImage: "square.stack")
+                            .foregroundColor(.primary)
+                    }
                 }
             } label: {
                 Label("Community", systemImage: "globe")
@@ -89,7 +93,9 @@ struct ContentView: View {
     private var feedSection: some View {
         Section("Feeds") {
             ForEach(appModel.communityFeeds, id: \.0) { community, feeds in
-                FeedDisclosureGroup(feeds: feeds, community: community)
+                if !safeMode || community.isSafeCommunity {
+                    FeedDisclosureGroup(feeds: feeds, community: community)
+                }
             }
         }
     }
@@ -303,14 +309,18 @@ struct FeedDisclosureGroup: View {
     let feeds: [Feed]
     let community: String
     @State private var expanded = true
+    
+    @AppStorage("safeMode") private var safeMode: Bool = true
 
     var body: some View {
         DisclosureGroup(isExpanded: $expanded) {
             ForEach(feeds, id: \.destination) { feed in
                 // Click each feed to view all posts in that feed.
                 // Grouped view available.
-                Label(feed.displayName, systemImage: "doc.text.image")
-                    .foregroundColor(.primary)
+                if !safeMode || feed.displayName.isSafeFeed {
+                    Label(feed.displayName, systemImage: "doc.text.image")
+                        .foregroundColor(.primary)
+                }
             }
         } label: {
             Label(community.capitalized, systemImage: "person.2")
