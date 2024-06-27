@@ -8,13 +8,15 @@
 import SwiftUI
 
 struct ContentView: View {
-    @Binding var appState: AppState
-    
+    @Environment(\.appModel) var appModel
+
     @State private var destinationSelection: SidebarDestination?
     @State private var userSelection: User.ID?
     @State private var showingSetting = false
     @State private var showingGroupedUser = false
-    
+
+    @State private var expandedLibraryCommunity = true
+
     var body: some View {
         Group {
             if showingGroupedUser {
@@ -40,52 +42,54 @@ struct ContentView: View {
             }
         }
     }
-    
+
     private var sidebar: some View {
         List(selection: $destinationSelection) {
             librarySection
             feedSection
         }
+        .navigationTitle("Bottle")
         .toolbar { toolbar }
         .sheet(isPresented: $showingSetting) {
             Settings()
                 .onSubmit {
                     setPandaCookies()
-                    Task { await refetch() }
+                    Task { await appModel.fetchAll() }
                     showingSetting = false
                 }
         }
     }
 
     private var librarySection: some View {
-        Section("Bottle") {
-            DisclosureGroup(isExpanded: .initial(true)) {
-                ForEach(appState.metadata?.communities ?? [], id: \.destination) { community in
+        Section("Library") {
+            libraryTreeSection
+
+            DisclosureGroup(isExpanded: $expandedLibraryCommunity) {
+                ForEach(appModel.metadata?.communities ?? [], id: \.destination) { community in
                     // Click each community in the library to view all posts in that community.
                     // Always show grouped user view.
                     Label(community.name.capitalized, systemImage: "square.stack")
                         .foregroundColor(.primary)
                 }
             } label: {
-                Label("Library", systemImage: "photo.on.rectangle")
+                Label("Community", systemImage: "globe")
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var libraryTreeSection: some View {
+        if let libraryTree = appModel.libraryTree {
+            OutlineGroup(libraryTree, children: \.children) { entry in
+                LibraryTreeRow(entry: entry)
             }
         }
     }
 
     private var feedSection: some View {
         Section("Feeds") {
-            ForEach(appState.communityFeeds, id: \.0) { community, feeds in
-                DisclosureGroup(isExpanded: .initial(true)) {
-                    ForEach(feeds, id: \.destination) { feed in
-                        // Click each feed to view all posts in that feed.
-                        // Grouped view available.
-                        Label(feed.displayName, systemImage: "doc.text.image")
-                            .foregroundColor(.primary)
-                    }
-                } label: {
-                    Label(community.capitalized, systemImage: "person.2")
-                        .foregroundColor(.primary)
-                }
+            ForEach(appModel.communityFeeds, id: \.0) { community, feeds in
+                FeedDisclosureGroup(feeds: feeds, community: community)
             }
         }
     }
@@ -99,13 +103,17 @@ struct ContentView: View {
                 libraryView(community: community)
             }
         } else if case .feed = selection,
-                  let feed = appState.feeds.first(where: { $0.destination == selection! })
+            let feed = appModel.feeds.first(where: { $0.destination == selection! })
         {
             if showingGroupedUser {
                 feedUserList(feed: feed, selection: $userSelection)
             } else {
                 feedView(feed: feed)
             }
+        } else if case .album(let id) = selection {
+            albumView(id: id)
+        } else if case .folder(let id) = selection {
+            folderView(id: id)
         } else {
             if showingGroupedUser {
                 Text("Select a community")
@@ -114,110 +122,153 @@ struct ContentView: View {
             }
         }
     }
-    
+
     @ViewBuilder
     private func thirdDestination(for selection: SidebarDestination?) -> some View {
         if case .community(let community) = selection {
             libraryUserView(community: community, selection: userSelection)
         } else if case .feed = selection,
-                  let feed = appState.feeds.first(where: { $0.destination == selection! })
+            let feed = appModel.feeds.first(where: { $0.destination == selection! })
         {
             feedUserView(feed: feed, selection: userSelection)
         } else {
             Text("Select a user")
         }
     }
-        
+
     private func libraryView(community: String) -> some View {
         Group {
             if community == "panda" {
-                PostGrid(model: PaginatedPostViewModel(orderByWork: true) { page in
-                    try await fetchCommunityWorks(community: community, page: page)
-                })
+                PostGrid(
+                    model: PaginatedPostViewModel(orderByWork: true) { page in
+                        try await Client.fetchCommunityWorks(community: community, page: page)
+                    }
+                )
                 .id(PostGridID.library(community))
             } else {
-                MediaGrid(model: PaginatedMediaViewModel(orderByWork: true) { page in
-                    try await fetchCommunityWorks(community: community, page: page)
-                })
+                MediaGrid(
+                    model: PaginatedMediaViewModel(orderByWork: true) { page in
+                        try await Client.fetchCommunityWorks(community: community, page: page)
+                    }
+                )
                 .id(MediaGridID.library(community))
             }
         }
         .navigationTitle("\(community.capitalized) Works in Library")
     }
-    
+
     private func libraryUserList(community: String, selection: Binding<User.ID?>) -> some View {
-        UserList(selection: selection, model: PaginatedUserViewModel { page in
-            try await fetchArchivedUsers(community: community, page: page)
-        })
+        UserList(
+            selection: selection,
+            model: PaginatedUserViewModel { page in
+                try await Client.fetchArchivedUsers(community: community, page: page)
+            }
+        )
         .id(UserListID.library(community))
         .navigationTitle("\(community.capitalized) Artists in Library")
     }
-    
+
     @ViewBuilder
     private func libraryUserView(community: String, selection: User.ID?) -> some View {
         if let userID = selection {
             Group {
                 if community == "panda" {
-                    PostGrid(model: PaginatedPostViewModel { page in
-                        try await fetchArchivedUserPosts(community: community, userID: userID.userId, page: page)
-                    })
+                    PostGrid(
+                        model: PaginatedPostViewModel { page in
+                            try await Client.fetchArchivedUserPosts(
+                                community: community, userID: userID.userId, page: page)
+                        }
+                    )
                     .id(PostGridID.libraryByUser(userID))
                 } else {
-                    MediaGrid(model: PaginatedMediaViewModel { page in
-                        try await fetchArchivedUserPosts(community: community, userID: userID.userId, page: page)
-                    })
+                    MediaGrid(
+                        model: PaginatedMediaViewModel { page in
+                            try await Client.fetchArchivedUserPosts(
+                                community: community, userID: userID.userId, page: page)
+                        }
+                    )
                     .id(MediaGridID.libraryByUser(userID))
                 }
             }
             .navigationTitle("\(community.capitalized) Works by Artist in Library")
         }
     }
-    
+
     private func feedView(feed: Feed) -> some View {
         Group {
             if feed.community == "panda" {
-                PostGrid(model: PaginatedPostViewModel { page in
-                    try await fetchPosts(community: feed.community, feedID: feed.feedId, page: page)
-                })
+                PostGrid(
+                    model: PaginatedPostViewModel { page in
+                        try await Client.fetchPosts(community: feed.community, feedID: feed.feedId, page: page)
+                    }
+                )
                 .id(PostGridID.feed(feed.id))
             } else {
-                MediaGrid(model: PaginatedMediaViewModel { page in
-                    try await fetchPosts(community: feed.community, feedID: feed.feedId, page: page)
-                })
+                MediaGrid(
+                    model: PaginatedMediaViewModel { page in
+                        try await Client.fetchPosts(community: feed.community, feedID: feed.feedId, page: page)
+                    }
+                )
                 .id(MediaGridID.feed(feed.id))
             }
         }
         .navigationTitle("\(feed.community.capitalized) Feed \(feed.displayName)")
     }
-    
+
     private func feedUserList(feed: Feed, selection: Binding<User.ID?>) -> some View {
-        UserList(selection: selection, model: PaginatedUserViewModel { page in
-            try await fetchFeedUsers(community: feed.community, feedID: feed.feedId, page: page)
-        })
+        UserList(
+            selection: selection,
+            model: PaginatedUserViewModel { page in
+                try await Client.fetchFeedUsers(community: feed.community, feedID: feed.feedId, page: page)
+            }
+        )
         .id(UserListID.feed(feed.id))
         .navigationTitle("\(feed.community.capitalized) Artists in Feed \(feed.displayName)")
     }
-    
+
     @ViewBuilder
     private func feedUserView(feed: Feed, selection: User.ID?) -> some View {
         if let userID = selection {
             Group {
                 if feed.community == "panda" {
-                    PostGrid(model: PaginatedPostViewModel { page in
-                        try await fetchFeedUserPosts(community: feed.community, feedID: feed.feedId, userID: userID.userId, page: page)
-                    })
+                    PostGrid(
+                        model: PaginatedPostViewModel { page in
+                            try await Client.fetchFeedUserPosts(
+                                community: feed.community, feedID: feed.feedId, userID: userID.userId, page: page)
+                        }
+                    )
                     .id(PostGridID.feedByUser(feed.id, userID))
                 } else {
-                    MediaGrid(model: PaginatedMediaViewModel { page in
-                        try await fetchFeedUserPosts(community: feed.community, feedID: feed.feedId, userID: userID.userId, page: page)
-                    })
+                    MediaGrid(
+                        model: PaginatedMediaViewModel { page in
+                            try await Client.fetchFeedUserPosts(
+                                community: feed.community, feedID: feed.feedId, userID: userID.userId, page: page)
+                        }
+                    )
                     .id(MediaGridID.feedByUser(feed.id, userID))
                 }
             }
             .navigationTitle("\(feed.community.capitalized) Posts by Artist in Feed \(feed.displayName)")
         }
     }
-    
+
+    @ViewBuilder
+    private func albumView(id: Album.ID) -> some View {
+        MediaGrid(
+            model: PaginatedMediaViewModel { page in
+                try await Client.fetchWorks(albumId: id, page: page)
+            }
+        )
+        .id(MediaGridID.album(id))
+    }
+
+    @ViewBuilder
+    private func folderView(id: Folder.ID) -> some View {
+        if let folder = appModel.folders.first(where: { $0.id == id }) {
+            Text("Folder \(folder.name)")
+        }
+    }
+
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
         ToolbarItem(placement: .navigation) {
@@ -226,7 +277,7 @@ struct ContentView: View {
             }
             .toggleStyle(.button)
         }
-        ToolbarItem(placement: .automatic) {
+        ToolbarItem(placement: .secondaryAction) {
             Button {
                 showingSetting = true
             } label: {
@@ -234,25 +285,36 @@ struct ContentView: View {
             }
         }
     }
-    
-    private func refetch() async {
-        do {
-            appState = AppState()
-            let metadata = try await fetchMetadata()
-            let feeds = try await fetchFeeds(communityNames: metadata.communities.map(\.name))
-            appState = AppState(metadata: metadata, feeds: feeds)
-        } catch {
-            print(error)
-        }
-    }
-    
+
     private func setPandaCookies() {
         guard let ipbMemberID = UserDefaults.standard.string(forKey: "pandaMemberID"),
             let ipbPassHash = UserDefaults.standard.string(forKey: "pandaPassHash"),
-            let igneous = UserDefaults.standard.string(forKey: "pandaIgneous") else { return }
-        let cookies = pandaCookies(ipbMemberID: ipbMemberID, ipbPassHash: ipbPassHash, igneous: igneous)
+            let igneous = UserDefaults.standard.string(forKey: "pandaIgneous")
+        else { return }
+        let cookies = Client.pandaCookies(ipbMemberID: ipbMemberID, ipbPassHash: ipbPassHash, igneous: igneous)
         cookies.forEach { HTTPCookieStorage.shared.setCookie($0) }
         print("Panda cookies set. \(cookies)")
+    }
+}
+
+// MARK: - Components
+
+struct FeedDisclosureGroup: View {
+    let feeds: [Feed]
+    let community: String
+    @State private var expanded = true
+
+    var body: some View {
+        DisclosureGroup(isExpanded: $expanded) {
+            ForEach(feeds, id: \.destination) { feed in
+                // Click each feed to view all posts in that feed.
+                // Grouped view available.
+                Label(feed.displayName, systemImage: "doc.text.image")
+                    .foregroundColor(.primary)
+            }
+        } label: {
+            Label(community.capitalized, systemImage: "person.2")
+        }
     }
 }
 
@@ -264,17 +326,21 @@ func userInCommunityDestination(user: User) -> some View {
     if let params = user.feedParams {
         Group {
             if community == "panda" {
-                PostGrid(model: IndefinitePostViewModel { offset in
-                    let request = EndpointRequest(params: params, offset: offset)
-                    return try await fetchTemporaryFeed(community: community, request: request)
-                })
+                PostGrid(
+                    model: IndefinitePostViewModel { offset in
+                        let request = EndpointRequest(params: params, offset: offset)
+                        return try await Client.fetchTemporaryFeed(community: community, request: request)
+                    }
+                )
                 .id(PostGridID.temporaryUser(user.id))
-                
+
             } else {
-                MediaGrid(model: IndefiniteMediaViewModel { offset in
-                    let request = EndpointRequest(params: params, offset: offset)
-                    return try await fetchTemporaryFeed(community: community, request: request)
-                })
+                MediaGrid(
+                    model: IndefiniteMediaViewModel { offset in
+                        let request = EndpointRequest(params: params, offset: offset)
+                        return try await Client.fetchTemporaryFeed(community: community, request: request)
+                    }
+                )
                 .id(MediaGridID.temporaryUser(user.id))
             }
         }
@@ -287,14 +353,18 @@ func userInLibraryDestination(user: User) -> some View {
     let community = user.community
     Group {
         if user.community == "panda" {
-            PostGrid(model: PaginatedPostViewModel { page in
-                try await fetchArchivedUserPosts(community: community, userID: user.userId, page: page)
-            })
+            PostGrid(
+                model: PaginatedPostViewModel { page in
+                    try await Client.fetchArchivedUserPosts(community: community, userID: user.userId, page: page)
+                }
+            )
             .id(PostGridID.libraryByUser(user.id))
         } else {
-            MediaGrid(model: PaginatedMediaViewModel { page in
-                try await fetchArchivedUserPosts(community: community, userID: user.userId, page: page)
-            })
+            MediaGrid(
+                model: PaginatedMediaViewModel { page in
+                    try await Client.fetchArchivedUserPosts(community: community, userID: user.userId, page: page)
+                }
+            )
             .id(MediaGridID.libraryByUser(user.id))
         }
     }

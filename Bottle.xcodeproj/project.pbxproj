@@ -19,6 +19,7 @@
 		515A6EFF2AAB180200AA1D43 /* Response.swift in Sources */ = {isa = PBXBuildFile; fileRef = 515A6EFE2AAB180200AA1D43 /* Response.swift */; };
 		515A6F012AAB1ED000AA1D43 /* Client.swift in Sources */ = {isa = PBXBuildFile; fileRef = 515A6F002AAB1ED000AA1D43 /* Client.swift */; };
 		515A6F032AAB4C8300AA1D43 /* Error.swift in Sources */ = {isa = PBXBuildFile; fileRef = 515A6F022AAB4C8200AA1D43 /* Error.swift */; };
+		516075562C2AC00000A3C0D6 /* LibraryTreeRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 516075552C2ABFFE00A3C0D6 /* LibraryTreeRow.swift */; };
 		516D1AF92AAACB1A00C90060 /* BottleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 516D1AF82AAACB1A00C90060 /* BottleApp.swift */; };
 		516D1AFB2AAACB1A00C90060 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 516D1AFA2AAACB1A00C90060 /* ContentView.swift */; };
 		516D1AFD2AAACB1D00C90060 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 516D1AFC2AAACB1D00C90060 /* Assets.xcassets */; };
@@ -29,7 +30,7 @@
 		51CC71192AB1B23E00A85047 /* MediaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51CC71182AB1B23E00A85047 /* MediaView.swift */; };
 		51DAFC912AECBE60004B019A /* VerticalScrollFix.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51DAFC902AECBE60004B019A /* VerticalScrollFix.swift */; };
 		51EADE742AC134840019A6CE /* StatusBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51EADE732AC134840019A6CE /* StatusBar.swift */; };
-		51FB0E312B412ED90065BF35 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51FB0E302B412ED90065BF35 /* AppState.swift */; };
+		51FB0E312B412ED90065BF35 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51FB0E302B412ED90065BF35 /* AppModel.swift */; };
 		51FE7A842BB4760A00B517DA /* PostGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51FE7A832BB4760A00B517DA /* PostGrid.swift */; };
 		51FE7A862BB4767E00B517DA /* PostView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51FE7A852BB4767E00B517DA /* PostView.swift */; };
 		51FF117C2B3F214D00D31336 /* Zoom.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51FF117B2B3F214D00D31336 /* Zoom.swift */; };
@@ -61,6 +62,7 @@
 		515A6EFE2AAB180200AA1D43 /* Response.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Response.swift; sourceTree = "<group>"; };
 		515A6F002AAB1ED000AA1D43 /* Client.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Client.swift; sourceTree = "<group>"; };
 		515A6F022AAB4C8200AA1D43 /* Error.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Error.swift; sourceTree = "<group>"; };
+		516075552C2ABFFE00A3C0D6 /* LibraryTreeRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryTreeRow.swift; sourceTree = "<group>"; };
 		516D1AF52AAACB1A00C90060 /* Bottle.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Bottle.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		516D1AF82AAACB1A00C90060 /* BottleApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BottleApp.swift; sourceTree = "<group>"; };
 		516D1AFA2AAACB1A00C90060 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -75,7 +77,7 @@
 		51CC71182AB1B23E00A85047 /* MediaView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaView.swift; sourceTree = "<group>"; };
 		51DAFC902AECBE60004B019A /* VerticalScrollFix.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VerticalScrollFix.swift; sourceTree = "<group>"; };
 		51EADE732AC134840019A6CE /* StatusBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBar.swift; sourceTree = "<group>"; };
-		51FB0E302B412ED90065BF35 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		51FB0E302B412ED90065BF35 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		51FE7A832BB4760A00B517DA /* PostGrid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostGrid.swift; sourceTree = "<group>"; };
 		51FE7A852BB4767E00B517DA /* PostView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostView.swift; sourceTree = "<group>"; };
 		51FF117B2B3F214D00D31336 /* Zoom.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Zoom.swift; sourceTree = "<group>"; };
@@ -116,6 +118,7 @@
 				516D1AF82AAACB1A00C90060 /* BottleApp.swift */,
 				516D1AFA2AAACB1A00C90060 /* ContentView.swift */,
 				5110A2AC2B74DFA60043D840 /* ViewModel.swift */,
+				51FB0E302B412ED90065BF35 /* AppModel.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -123,6 +126,7 @@
 		5110A2A82B74D9610043D840 /* Component */ = {
 			isa = PBXGroup;
 			children = (
+				516075552C2ABFFE00A3C0D6 /* LibraryTreeRow.swift */,
 				51ABF5DB2AEAB80500BCC986 /* UserList.swift */,
 				51EADE732AC134840019A6CE /* StatusBar.swift */,
 				51ABF5DD2AEAB82C00BCC986 /* MediaGrid.swift */,
@@ -140,7 +144,6 @@
 				515A6EFE2AAB180200AA1D43 /* Response.swift */,
 				5135F1432B844EA9003A6C4B /* Request.swift */,
 				515A6F002AAB1ED000AA1D43 /* Client.swift */,
-				51FB0E302B412ED90065BF35 /* AppState.swift */,
 			);
 			path = Data;
 			sourceTree = "<group>";
@@ -345,7 +348,8 @@
 				51DAFC912AECBE60004B019A /* VerticalScrollFix.swift in Sources */,
 				5110A2AD2B74DFA60043D840 /* ViewModel.swift in Sources */,
 				516D1AFB2AAACB1A00C90060 /* ContentView.swift in Sources */,
-				51FB0E312B412ED90065BF35 /* AppState.swift in Sources */,
+				51FB0E312B412ED90065BF35 /* AppModel.swift in Sources */,
+				516075562C2AC00000A3C0D6 /* LibraryTreeRow.swift in Sources */,
 				512202EE2C0356B4004FC512 /* Const.swift in Sources */,
 				515A6EFF2AAB180200AA1D43 /* Response.swift in Sources */,
 				51EADE742AC134840019A6CE /* StatusBar.swift in Sources */,

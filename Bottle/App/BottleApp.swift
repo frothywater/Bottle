@@ -10,13 +10,13 @@ import SwiftUI
 
 @main
 struct BottleApp: App {
-    @State var appState = AppState()
+    @Environment(\.appModel) var appModel
 
     var body: some Scene {
         WindowGroup {
-            ContentView(appState: $appState)
+            ContentView()
                 .onAppear { initialize() }
-                .task { await fetch() }
+                .task { await appModel.fetchAll() }
         }
         #if os(macOS)
         .windowToolbarStyle(.unifiedCompact)
@@ -32,14 +32,8 @@ struct BottleApp: App {
         }
         ImagePipeline.shared = ImagePipeline(configuration: .withDataCache(name: "com.frothywater.Bottle.DataCache", sizeLimit: 1024))
     }
+}
 
-    private func fetch() async {
-        do {
-            let metadata = try await fetchMetadata()
-            let feeds = try await fetchFeeds(communityNames: metadata.communities.map(\.name))
-            appState = AppState(metadata: metadata, feeds: feeds)
-        } catch {
-            print(error)
-        }
-    }
+extension EnvironmentValues {
+    @Entry var appModel = AppModel()
 }

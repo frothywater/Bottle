@@ -118,6 +118,24 @@ struct LibraryImage: Decodable, Identifiable {
     let size: Int?
 }
 
+struct Album: Decodable, Identifiable {
+    let id: Int
+    let name: String
+    let folderId: Int?
+    let position: Int
+    let addedDate: Date
+    let modifiedDate: Date
+}
+
+struct Folder: Decodable, Identifiable {
+    let id: Int
+    let name: String
+    let parentId: Int?
+    let position: Int
+    let addedDate: Date
+    let modifiedDate: Date
+}
+
 // MARK: - Response
 
 protocol EntityContainer {
@@ -140,7 +158,7 @@ protocol IndefiniteResponse {
     var totalItems: Int? { get }
 }
 
-struct GeneralResponse: EntityContainer, PaginatedResponse, Decodable  {
+struct GeneralResponse: EntityContainer, PaginatedResponse, Decodable {
     let posts: [Post]?
     let media: [Media]?
     let users: [User]?
@@ -169,11 +187,11 @@ enum PostExtra: Decodable {
     case pixiv(PixivIllustExtra)
     case yandere(YanderePostExtra)
     case panda(PandaGalleryExtra)
-    
+
     private enum CodingKeys: String, CodingKey {
         case pixiv, yandere, panda
     }
-    
+
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         if let pixivExtra = try container.decodeIfPresent(PixivIllustExtra.self, forKey: .pixiv) {
@@ -183,7 +201,8 @@ enum PostExtra: Decodable {
         } else if let pandaExtra = try container.decodeIfPresent(PandaGalleryExtra.self, forKey: .panda) {
             self = .panda(pandaExtra)
         } else {
-            throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: [], debugDescription: "Invalid PostExtra"))
+            throw DecodingError.dataCorrupted(
+                DecodingError.Context(codingPath: [], debugDescription: "Invalid PostExtra"))
         }
     }
 }
@@ -194,13 +213,12 @@ enum MediaExtra: Decodable {
 }
 
 struct PixivIllustExtra: Decodable {
-   let title: String
-   let type: String
-   let restrict: Bool
-   let sanityLevel: Int
-   let seriesId: Int?
-   let seriesTitle: String?
-   let tags: [String]
+    let title: String
+    let type: String
+    let restrict: Bool
+    let sanityLevel: Int
+    let seriesId: Int?
+    let seriesTitle: String?
 }
 
 struct YanderePostExtra: Decodable {
@@ -211,7 +229,6 @@ struct YanderePostExtra: Decodable {
     let fileSize: Int
     let hasChildren: Bool
     let parentId: Int?
-    let tags: [String]
 }
 
 struct PandaGalleryExtra: Decodable {
@@ -219,7 +236,6 @@ struct PandaGalleryExtra: Decodable {
     let category: String
     let uploader: String
     let rating: Float
-    let tags: [String]
     let englishTitle: String?
     let parent: String?
     let visible: Bool?
@@ -230,7 +246,10 @@ struct PandaGalleryExtra: Decodable {
 // MARK: - Scheme
 
 indirect enum Scheme {
-    case null, bool, int, bigint, double, string, option(Scheme), array(Scheme), object([String: Scheme])
+    case null, bool, int, bigint, double, string
+    case option(Scheme)
+    case array(Scheme)
+    case object([String: Scheme])
 }
 
 extension Scheme: Decodable {
@@ -261,7 +280,8 @@ extension Scheme: Decodable {
             } else if let value = try container.decodeIfPresent([String: Scheme].self, forKey: .object) {
                 self = .object(value)
             } else {
-                throw DecodingError.dataCorruptedError(forKey: .option, in: container, debugDescription: "Invalid scheme")
+                throw DecodingError.dataCorruptedError(
+                    forKey: .option, in: container, debugDescription: "Invalid scheme")
             }
         }
     }
@@ -273,6 +293,8 @@ extension Scheme: Decodable {
 enum SidebarDestination: Hashable {
     case community(String)
     case feed(community: String, id: Int)
+    case album(id: Int)
+    case folder(id: Int)
 }
 
 extension CommunityMetadata {
@@ -318,11 +340,12 @@ extension Post: Identifiable {
 
 extension Post {
     var displayText: String {
-        let result = if text.contains("https://") {
-            String(text.split(separator: "https://", omittingEmptySubsequences: false).first ?? "")
-        } else {
-            text
-        }
+        let result =
+            if text.contains("https://") {
+                String(text.split(separator: "https://", omittingEmptySubsequences: false).first ?? "")
+            } else {
+                text
+            }
         return result.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }
@@ -371,29 +394,89 @@ extension LibraryImage {
 
 extension Work {
     var localThumbnailURL: String? {
-        guard let baseURL = getServerURL(), let thumbnailPath = thumbnailPath else { return nil }
+        guard let baseURL = Client.getServerURL(), let thumbnailPath = thumbnailPath else { return nil }
         return "\(baseURL)/image/\(thumbnailPath.percentEncoded)"
     }
-    
+
     var localSmallThumbnailURL: String? {
-        guard let baseURL = getServerURL(), let smallThumbnailPath = smallThumbnailPath else { return nil }
+        guard let baseURL = Client.getServerURL(), let smallThumbnailPath = smallThumbnailPath else { return nil }
         return "\(baseURL)/image/\(smallThumbnailPath.percentEncoded)"
     }
 }
 
 extension LibraryImage {
     var localURL: String? {
-        guard let baseURL = getServerURL(), let path = path else { return nil }
+        guard let baseURL = Client.getServerURL(), let path = path else { return nil }
         return "\(baseURL)/image/\(path.percentEncoded)"
     }
-    
+
     var localThumbnailURL: String? {
-        guard let baseURL = getServerURL(), let thumbnailPath = thumbnailPath else { return nil }
+        guard let baseURL = Client.getServerURL(), let thumbnailPath = thumbnailPath else { return nil }
         return "\(baseURL)/image/\(thumbnailPath.percentEncoded)"
     }
-    
+
     var localSmallThumbnailURL: String? {
-        guard let baseURL = getServerURL(), let smallThumbnailPath = smallThumbnailPath else { return nil }
+        guard let baseURL = Client.getServerURL(), let smallThumbnailPath = smallThumbnailPath else { return nil }
         return "\(baseURL)/image/\(smallThumbnailPath.percentEncoded)"
+    }
+}
+
+enum LibraryEntry: Hashable, Identifiable {
+    case album(AlbumEntry)
+    case folder(FolderEntry)
+
+    var id: SidebarDestination {
+        switch self {
+        case .album(let album): return .album(id: album.id)
+        case .folder(let folder): return .folder(id: folder.id)
+        }
+    }
+    
+    var children: [LibraryEntry]? {
+        switch self {
+        case .album(_): return nil
+        case .folder(let folder): return folder.children
+        }
+    }
+}
+
+struct AlbumEntry: Identifiable, Hashable {
+    let id: Int
+    let name: String
+    let position: Int
+    let addedDate: Date
+    let modifiedDate: Date
+}
+
+struct FolderEntry: Identifiable, Hashable {
+    let id: Int
+    let name: String
+    let position: Int
+    let addedDate: Date
+    let modifiedDate: Date
+    var folders: [FolderEntry]
+    var albums: [AlbumEntry]
+
+    var children: [LibraryEntry] {
+        folders.map { .folder($0) } + albums.map { .album($0) }
+    }
+    
+    var isRoot: Bool { id == 0 }
+
+    static let root = FolderEntry(
+        id: 0, name: "Albums", position: 0, addedDate: Date(), modifiedDate: Date(), folders: [], albums: [])
+}
+
+extension Album {
+    var entry: AlbumEntry {
+        AlbumEntry(id: id, name: name, position: position, addedDate: addedDate, modifiedDate: modifiedDate)
+    }
+}
+
+extension Folder {
+    var entry: FolderEntry {
+        FolderEntry(
+            id: id, name: name, position: position, addedDate: addedDate, modifiedDate: modifiedDate, folders: [],
+            albums: [])
     }
 }
