@@ -54,6 +54,14 @@ class AppModel {
         await fetchFeeds()
         await fetchLibrary()
     }
+    
+    func album(_ id: Album.ID) -> Album? {
+        albums.first { $0.id == id }
+    }
+    
+    func folder(_ id: Folder.ID) -> Folder? {
+        folders.first { $0.id == id }
+    }
 }
 
 // MARK: Helpers

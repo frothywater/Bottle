@@ -35,6 +35,7 @@ private struct FolderRow: View {
                 }
             }
         }
+        .id(renaming)
         .contextMenu {
             if !folder.isRoot {
                 Button("Rename") { renaming = true }
@@ -43,7 +44,6 @@ private struct FolderRow: View {
             Button("New Album", action: newAlbum)
             Button("New Folder", action: newFolder)
         }
-        .id(renaming)
     }
 
     private func delete() {
@@ -84,6 +84,7 @@ private struct AlbumRow: View {
     let album: AlbumEntry
     
     @State private var renaming = false
+    @State private var targeted = false
     @Environment(\.appModel) var appModel
 
     var body: some View {
@@ -91,11 +92,18 @@ private struct AlbumRow: View {
             _ = try await Client.renameAlbum(albumId: album.id, name: name)
             await appModel.fetchLibrary()
         }
+        .id(renaming)
         .contextMenu {
             Button("Rename") { renaming = true }
             Button("Delete", action: delete)
         }
-        .id(renaming)
+        .dropDestination(for: Work.self) { works, location in
+            if !works.isEmpty {
+                addWorks(works.map(\.id))
+                return true
+            }
+            return false
+        } isTargeted: { targeted = $0 }
     }
 
     private func delete() {
@@ -103,6 +111,16 @@ private struct AlbumRow: View {
             do {
                 try await Client.deleteAlbum(albumId: album.id)
                 await appModel.fetchLibrary()
+            } catch {
+                print(error)
+            }
+        }
+    }
+    
+    private func addWorks(_ ids: [Int]) {
+        Task {
+            do {
+                try await Client.addWorks(albumId: album.id, workIds: ids)
             } catch {
                 print(error)
             }
@@ -168,4 +186,10 @@ private struct RenamableLabel: View {
             }
         }
     }
+}
+
+// MARK: Environment
+
+extension EnvironmentValues {
+    @Entry var albumID: Album.ID?
 }

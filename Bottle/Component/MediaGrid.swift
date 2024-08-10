@@ -29,6 +29,7 @@ struct MediaGrid<VM: MediaProvider & ContentLoader & ObservableObject>: View {
                     Color.clear.task { await model.load() }
                 }
             }
+            .padding(5)
         }
         .safeAreaPadding(.bottom, 30)
         .overlay(alignment: .bottom) { StatusBar(message: model.message, columnCount: $columnCount) }

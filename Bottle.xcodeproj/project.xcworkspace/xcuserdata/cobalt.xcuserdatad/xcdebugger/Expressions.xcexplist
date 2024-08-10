@@ -3,10 +3,10 @@
    version = "1.0">
    <ContextStates>
       <ContextState
-         contextName = "closure #1 in closure #1 in closure #1 in PostGrid.body.getter:PostGrid.swift">
+         contextName = "GalleryItem.hasPreview.getter:PostView.swift">
          <PersistentStrings>
             <PersistentString
-               value = "model">
+               value = "previewImageURL">
             </PersistentString>
          </PersistentStrings>
       </ContextState>
@@ -15,6 +15,30 @@
          <PersistentStrings>
             <PersistentString
                value = "mediaDict">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "closure #1 in closure #1 in closure #1 in PostGrid.body.getter:PostGrid.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "model">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "closure #1 in closure #1 in closure #2 in GalleryView.thumbnail(item:):PostView.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "item.previewImageURL?.imageRequest">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "closure #1 in closure #1 in closure #1 in closure #2 in GalleryView.thumbnail(item:):PostView.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "state.error">
             </PersistentString>
          </PersistentStrings>
       </ContextState>

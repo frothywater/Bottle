@@ -30,7 +30,8 @@ struct BottleApp: App {
         if UserDefaults.standard.string(forKey: "serverAddress") == nil {
             UserDefaults.standard.set("http://127.0.0.1:6000", forKey: "serverAddress")
         }
-        ImagePipeline.shared = ImagePipeline(configuration: .withDataCache(name: "com.frothywater.Bottle.DataCache", sizeLimit: 1024))
+        
+        ImagePipeline.shared = makeDefaultImagePipeline()
     }
 }
 

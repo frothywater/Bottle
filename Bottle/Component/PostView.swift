@@ -9,6 +9,8 @@ import Nuke
 import NukeUI
 import SwiftUI
 
+// MARK: - Gallery
+
 @MainActor
 struct PostView: View {
     let entities: PostEntities
@@ -44,26 +46,37 @@ struct PostView: View {
 
     @ViewBuilder
     private var outer: some View {
-        let media = entities.media.first
-        let image = entities.images.first { $0.pageIndex == media?.pageIndex }
-        let width = media?.width ?? image?.width
-        let height = media?.height ?? image?.height
         let url = entities.work?.localThumbnailURL ?? entities.post.thumbnailUrl
         
         LazyImage(request: url?.imageRequest) { state in
             if let image = state.image {
-                image.resizable().scaledToFit()
-                    .draggable(image)
+                withInfoView {
+                    image.resizable().scaledToFit()
+                        .draggable(image)
+                }
             } else if state.error != nil {
-                Color.clear.overlay { Image(systemName: "photo") }
-                    .frame(minHeight: 300)
+                withInfoView {
+                    Color.clear.overlay { Image(systemName: "photo") }
+                        .frame(minHeight: 300)
+                }
             } else {
-                Color.clear
-                    .frame(minHeight: 300)
+                withInfoView {
+                    Color.clear
+                        .frame(minHeight: 300)
+                }
             }
         }
-        .fit(width: width, height: height)
-        .overlay(alignment: .bottom) { infoOverlay }
+    }
+    
+    @ViewBuilder
+    private func withInfoView(_ imageView: () -> some View) -> some View {
+        VStack(spacing: 0) {
+            imageView()
+                .fit(width: entities.width, height: entities.height)
+            infoOverlay
+                .background(alignment: .bottom) { imageView().scaledToFill().allowsHitTesting(false) }
+                .clipped()
+        }
         .contentShape(Rectangle())
         .cornerRadius(10)
     }
@@ -131,6 +144,8 @@ struct PostView: View {
         }
     }
 }
+
+// MARK: - Gallery Page
 
 @MainActor
 private struct GalleryView: View {
@@ -289,23 +304,29 @@ private struct GalleryView: View {
     }
 }
 
+// MARK: - Reader
+
 @MainActor
 private struct GalleryReader: View {
-    fileprivate var model: GalleryViewModel
-    
-    let direction: LayoutDirection = .rightToLeft
     @State private var index: Int
     @State private var showingBar = false
-    @State private var prefetched: [Bool]
+    let direction: LayoutDirection = .rightToLeft
     
-    private let imagePrefetcher: ImagePrefetcher
+    fileprivate var model: GalleryViewModel
+    
+    @State private var pageTasks: [Task<(), Never>?]
+    @State private var pageErrors: [Error?]
+    @State private var imageTasks: [Task<(), Never>?]
+    @State private var imageFetched: [Bool]
     
     init(model: GalleryViewModel, index: Int = 0) {
         self.model = model
         self.index = index
-        self.prefetched = Array(repeating: false, count: model.items.count)
-        self.imagePrefetcher = ImagePrefetcher(maxConcurrentRequestCount: 10)
-        self.imagePrefetcher.priority = .normal
+        
+        self.pageTasks = Array(repeating: nil, count: model.items.count)
+        self.pageErrors = Array(repeating: nil, count: model.items.count)
+        self.imageTasks = Array(repeating: nil, count: model.items.count)
+        self.imageFetched = Array(repeating: false, count: model.items.count)
     }
     
     private var items: [GalleryItem] {
@@ -324,25 +345,21 @@ private struct GalleryReader: View {
             #if os(iOS)
             TabView(selection: $index) {
                 ForEach(items, id: \.index) { item in
-                    GalleryMediaView(item: item, model: model)
-                        .onAppear {
-                            // Use detached task to avoid cancellation
-                            Task { await fetch(index: index) }
-                        }
+                    GalleryMediaView(item: item, error: pageErrors[index], model: model)
                 }
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
             #else
-            GalleryMediaView(item: currentItem, model: model)
-                .onAppear {
-                    Task { await fetch(index: index) }
-                }
+            GalleryMediaView(item: currentItem, error: pageErrors[index], model: model)
             #endif
             
             tapDetection
         }
-        .onChange(of: index) {
-            Task { await fetch(index: index) }
+        .onChange(of: index, initial: true) {
+            handleFetch(index: index)
+        }
+        .onDisappear {
+            cancelAll()
         }
         .overlay(alignment: .bottom) { if showingBar { bar } }
         #if os(iOS)
@@ -391,38 +408,69 @@ private struct GalleryReader: View {
                in: 0...Float(items.count - 1), step: 1)
     }
     
-    private func fetch(index: Int, prefetchCount: Int = 10) async {
+    private func handleFetch(index: Int, prefetchCount: Int = 10) {
         let endIndex = min(index + prefetchCount, items.count)
             
-        await withTaskGroup(of: Void.self) { group in
-            group.addTask(priority: .high) { await fetchOne(index: index) }
-            for index in (index + 1)..<endIndex {
-                group.addTask { await fetchOne(index: index) }
+        // 1. Start fetching current page at high priority
+        fetchPage(index: index, current: true)
+        
+        // 2. Start prefetching following pages
+        for index in (index + 1)..<endIndex {
+            fetchPage(index: index)
+        }
+        
+        // 3. Cancel previous pages
+        for index in 0..<index {
+            pageTasks[index]?.cancel()
+            imageTasks[index]?.cancel()
+            pageTasks[index] = nil
+            imageTasks[index] = nil
+        }
+    }
+    
+    private func fetchPage(index: Int, current: Bool = false) {
+        if model.needFetchImage(index: index), pageTasks[index] == nil {
+            pageTasks[index] = Task(priority: current ? .high : nil) {
+                do {
+                    try await model.fetchImage(index: index)
+                    pageErrors[index] = nil
+                    print("Fetched image page \(model.post.postId)-\(index)")
+                } catch {
+                    print(error)
+                    pageErrors[index] = error
+                }
+                
+                fetchImage(index: index)
             }
         }
     }
     
-    private func fetchOne(index: Int) async {
-        if model.needFetchImage(index: index) {
-            await model.fetchImage(index: index)
-        }
-        prefetchImage(index: index)
-    }
-    
-    private func prefetchImage(index: Int) {
-        if !prefetched[index], let request = model.items[index].imageURL?.imageRequest {
-            if !ImagePipeline.shared.cache.containsCachedImage(for: request) {
-                print("Prefetching image \(index)")
-                imagePrefetcher.startPrefetching(with: [request])
+    private func fetchImage(index: Int) {
+        if !imageFetched[index], let request = model.items[index].imageURL?.imageRequest {
+            print("Prefetching image \(model.post.postId)-\(index)...")
+            imageTasks[index] = Task {
+                // Ignore prefetch error
+                do {
+                    let _ = try await ImagePipeline.shared.data(for: request)
+                    imageFetched[index] = true
+                    print("Prefetched image \(model.post.postId)-\(index)")
+                } catch {
+                    print(error)
+                }
             }
-            prefetched[index] = true
         }
+    }
+
+    private func cancelAll() {
+        pageTasks.forEach { $0?.cancel() }
+        imageTasks.forEach { $0?.cancel() }
     }
 }
 
 @MainActor
 private struct GalleryMediaView: View {
     let item: GalleryItem
+    let error: Error?
     fileprivate var model: GalleryViewModel
     
     var body: some View {
@@ -442,6 +490,13 @@ private struct GalleryMediaView: View {
                 }
             }
             .zoomable()
+        } else if let error = error {
+            VStack(spacing: 10) {
+                Text(item.readableIndex.formatted()).font(.headline)
+                Image(systemName: "photo")
+                Text("Error: \(error)").foregroundStyle(.secondary)
+                // TODO: Retry
+            }
         } else {
             VStack(spacing: 10) {
                 Text(item.readableIndex.formatted()).font(.headline)
@@ -559,6 +614,8 @@ private class GalleryViewModel {
     var loadingItem: [Bool] = []
     var pageStates: [GalleryPreviewPageState]
     
+    let session: URLSession
+    
     private static let defaultPageSize = 20
     
     init(entities: PostEntities, outerModel: PostProvider) {
@@ -574,6 +631,12 @@ private class GalleryViewModel {
         // Prepare preview page states
         self.pageSize = Self.defaultPageSize
         self.pageStates = Self.getPageStates(items: items, pageSize: Self.defaultPageSize)
+        
+        let config = URLSessionConfiguration.default
+        config.urlCache = nil
+        config.httpMaximumConnectionsPerHost = 10
+        config.timeoutIntervalForRequest = 10
+        self.session = URLSession(configuration: config)
     }
     
     var info: PandaGalleryExtra? {
@@ -653,7 +716,7 @@ private class GalleryViewModel {
         
         do {
             pageStates[pageIndex] = .loading
-            print("Fetching preview for post \(post.postId), page \(pageIndex), media, \(index)")
+            print("Fetching preview for post \(post.postId), page \(pageIndex), media \(index)")
             let response = try await Client.fetchPandaPost(id: post.postId, page: pageIndex)
             
             if let media = response.media {
@@ -676,7 +739,7 @@ private class GalleryViewModel {
             items.indices.contains(index) && !loadingItem[index] && !items[index].hasImage
     }
     
-    func fetchImage(index: Int) async {
+    func fetchImage(index: Int) async throws {
         let pageIndex = Int(index / pageSize)
         guard pageStates.indices.contains(pageIndex) else { return }
         if pageStates[pageIndex] == .empty {
@@ -685,23 +748,17 @@ private class GalleryViewModel {
         
         guard needFetchImage(index: index) else { return }
 
-        do {
-            loadingItem[index] = true
-            print("Fetching image for post \(post.postId), media \(index)")
-            let response = try await Client.fetchPandaMedia(id: post.postId, page: index)
-            
-            if let media = response.media?.first {
-                updateSingleMedia(media: media)
-            }
-            
-            // Update media in outer post view model
-            outerModel.updateEntities(responseToUpdate)
-            
-            loadingItem[index] = false
-        } catch {
-            print(error)
-            loadingItem[index] = false
+        loadingItem[index] = true
+        defer { loadingItem[index] = false }
+        print("Fetching image page \(post.postId)-\(index)...")
+        let response = try await Client.fetchPandaMedia(id: post.postId, page: index, session: session)
+        
+        if let media = response.media?.first {
+            updateSingleMedia(media: media)
         }
+        
+        // Update media in outer post view model
+        outerModel.updateEntities(responseToUpdate)
     }
     
     private func updateMedia(media: [Media]) {

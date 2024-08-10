@@ -93,10 +93,8 @@ private struct UserRecentRow: View {
         }
     }
 
-    @ViewBuilder
     func recentImage(item: UserEntities.RecentItem) -> some View {
-        let url = item.image?.localSmallThumbnailURL ?? item.image?.localThumbnailURL ?? item.media.thumbnailUrl
-        LazyImage(request: url?.imageRequest) { state in
+        LazyImage(request: item.url?.imageRequest) { state in
             if let image = state.image {
                 image.resizable().scaledToFit()
             } else if state.error != nil {
@@ -105,7 +103,7 @@ private struct UserRecentRow: View {
                 Color.clear
             }
         }
-        .fit(width: item.media.width, height: item.media.height)
+        .fit(width: item.width, height: item.height)
         .frame(height: 100)
         .cornerRadius(5)
         .overlay { RoundedRectangle(cornerRadius: 5).stroke(.separator) }

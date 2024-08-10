@@ -87,7 +87,7 @@ struct Media: Decodable {
     let extra: MediaExtra?
 }
 
-struct Work: Decodable, Identifiable {
+struct Work: Codable, Identifiable {
     let id: Int
     let community: String?
     let postId: String?
@@ -358,6 +358,11 @@ extension Media: Identifiable {
 
     var id: MediaID { .init(community: community, mediaId: mediaId) }
     var postID: Post.ID { .init(community: community, postId: postId) }
+}
+
+extension Media {
+    var displayWidth: Int? { community != "pixiv" ? width : nil }
+    var displayHeight: Int? { community != "pixiv" ? height : nil }
 }
 
 extension Work {

@@ -90,7 +90,7 @@ struct Client {
         return try decode(data)
     }
 
-    static func fetchPandaMedia(id: String, page: Int) async throws -> EndpointResponse {
+    static func fetchPandaMedia(id: String, page: Int, session: URLSession = .shared) async throws -> EndpointResponse {
         let data = try await call(path: "/panda/api/post/\(id)/media/\(page)")
         return try decode(data)
     }
@@ -186,7 +186,7 @@ private enum HTTPMethod: String {
     case delete = "DELETE"
 }
 
-private func call(_ method: HTTPMethod = .get, path: String, body: Encodable? = nil) async throws -> Data {
+private func call(_ method: HTTPMethod = .get, path: String, body: Encodable? = nil, session: URLSession = .shared) async throws -> Data {
     guard let baseURL = Client.getServerURL() else {
         throw AppError.invalidServer
     }
@@ -199,7 +199,7 @@ private func call(_ method: HTTPMethod = .get, path: String, body: Encodable? = 
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         print(String(data: request.httpBody!, encoding: .utf8)!)
     }
-    let (data, response) = try await URLSession.shared.data(for: request)
+    let (data, response) = try await session.data(for: request)
     guard let httpResponse = response as? HTTPURLResponse,
         (200...299).contains(httpResponse.statusCode)
     else {

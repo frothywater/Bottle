@@ -131,6 +131,18 @@ struct PostEntities {
     let work: Work?
     let media: [Media]
     let images: [LibraryImage]
+    
+    var width: Int? {
+        let media = media.first
+        let image = images.first { $0.pageIndex == media?.pageIndex }
+        return image?.width ?? media?.displayWidth
+    }
+    
+    var height: Int? {
+        let media = media.first
+        let image = images.first { $0.pageIndex == media?.pageIndex }
+        return image?.height ?? media?.displayHeight
+    }
 }
 
 protocol MediaProvider: EntityProvider {
@@ -173,6 +185,14 @@ extension MediaProvider {
         workDict.removeValue(forKey: workID)
         pageWork.removeValue(forKey: media.pageID)
     }
+    
+    func deleteMedia(_ mediaID: Media.ID) {
+        guard let media = mediaDict[mediaID] else { return }
+        postMedia[media.postID]?.removeAll { $0 == mediaID }
+        pageMedia.removeValue(forKey: media.pageID)
+        mediaDict.removeValue(forKey: mediaID)
+        mediaIDs.removeAll { $0 == mediaID }
+    }
 }
 
 struct MediaEntities {
@@ -182,6 +202,9 @@ struct MediaEntities {
     let media: Media
     let work: Work?
     let image: LibraryImage?
+    
+    var width: Int? { image?.width ?? media.displayWidth }
+    var height: Int? { image?.height ?? media.displayHeight }
 }
 
 protocol UserProvider: EntityProvider {
@@ -229,6 +252,10 @@ struct UserEntities {
     struct RecentItem {
         let media: Media
         let image: LibraryImage?
+        
+        var width: Int? { image?.width ?? media.displayWidth }
+        var height: Int? { image?.height ?? media.displayHeight }
+        var url: String? { image?.localSmallThumbnailURL ?? image?.localThumbnailURL ?? media.thumbnailUrl }
     }
 }
 

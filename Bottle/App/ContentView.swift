@@ -261,16 +261,17 @@ struct ContentView: View {
     @ViewBuilder
     private func albumView(id: Album.ID) -> some View {
         MediaGrid(
-            model: PaginatedMediaViewModel { page in
+            model: PaginatedMediaViewModel(orderByWork: true) { page in
                 try await Client.fetchWorks(albumId: id, page: page)
             }
         )
         .id(MediaGridID.album(id))
+        .environment(\.albumID, id)
     }
 
     @ViewBuilder
     private func folderView(id: Folder.ID) -> some View {
-        if let folder = appModel.folders.first(where: { $0.id == id }) {
+        if let folder = appModel.folder(id) {
             Text("Folder \(folder.name)")
         }
     }
@@ -309,7 +310,7 @@ struct FeedDisclosureGroup: View {
     let feeds: [Feed]
     let community: String
     @State private var expanded = true
-    
+
     @AppStorage("safeMode") private var safeMode: Bool = true
 
     var body: some View {
