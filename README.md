@@ -2,6 +2,10 @@
 
 An iOS/macOS client built with SwiftUI that provides a unified interface for browsing feeds, organizing media collections from multiple illustration social platforms. Serves as the frontend of the Bottle project. The backend is at ([`bottle-rs`](https://github.com/frothywater/bottle-rs)).
 
+![](screenshot/1.jpg)
+
+![](screenshot/2.jpg)
+
 ## Features
 
 - **Feeds**: Browse multiple illustration platforms in a unified feed interface. User can subscribe to different types of feeds (timeline, bookmarks, etc.) from different platforms. Bottle tracks them and updates new contents.
