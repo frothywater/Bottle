@@ -5,6 +5,7 @@
 //  Created by Cobalt on 9/8/23.
 //
 
+import Nuke
 import SwiftUI
 
 struct ContentView: View {
@@ -13,6 +14,7 @@ struct ContentView: View {
     @State private var destinationSelection: SidebarDestination?
     @State private var userSelection: User.ID?
     @State private var showingSetting = false
+    @State private var showingJobs = false
     @State private var showingGroupedUser = false
 
     @State private var expandedLibraryCommunity = true
@@ -55,10 +57,16 @@ struct ContentView: View {
         .sheet(isPresented: $showingSetting) {
             Settings()
                 .onSubmit {
+                    // Register URLSession for Nuke again, since proxy may changed
+                    ImagePipeline.shared = makeDefaultImagePipeline()
                     setPandaCookies()
+                    
                     Task { await appModel.fetchAll() }
                     showingSetting = false
                 }
+        }
+        .sheet(isPresented: $showingJobs) {
+            JobsView()
         }
     }
 
@@ -283,6 +291,13 @@ struct ContentView: View {
                 Label("Show users", systemImage: "person.2")
             }
             .toggleStyle(.button)
+        }
+        ToolbarItem(placement: .primaryAction) {
+            Button {
+                showingJobs = true
+            } label: {
+                Label("Jobs", systemImage: "arrow.clockwise")
+            }
         }
         ToolbarItem(placement: .secondaryAction) {
             Button {

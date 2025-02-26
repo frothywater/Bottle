@@ -287,6 +287,68 @@ extension Scheme: Decodable {
     }
 }
 
+// MARK: - Job
+
+struct JobsState: Decodable {
+    let feedUpdateJobs: [FeedUpdate]
+    let imageDownloadJob: ImageDownload
+    let pandaDownloadJobs: [PandaDownload]
+    
+    enum State: String, Decodable {
+        case ready, running, success, failed
+    }
+    
+    struct FeedUpdate: Decodable, Identifiable {
+        let state: State
+        let community: String
+        let feedId: Int
+        let fetched: Int
+        let error: String?
+        
+        var id: Feed.ID { .init(community: community, feedId: feedId) }
+    }
+    
+    struct ImageDownload: Decodable {
+        let state: State
+        let total: Int
+        let success: Int
+        let failure: Int
+        let error: String?
+        let failures: [Failure]?
+        
+        struct Failure: Decodable {
+            let url: String
+            let error: String
+        }
+    }
+    
+    struct PandaDownload: Decodable, Identifiable {
+        let state: State
+        let gid: Int
+        let title: String
+        
+        let metadataFetched: Bool
+        let totalPages: Int
+        let successPages: Int
+        let error: String?
+        
+        let totalImages: Int
+        let successImages: Int
+        let failureImages: Int
+        let failures: [Failure]?
+        
+        struct Failure: Decodable, Identifiable {
+            let gid: Int
+            let index: Int
+            let error: String
+            
+            var id: String { "\(gid)-\(index)" }
+        }
+        
+        var id: Int { gid }
+    }
+}
+
 // MARK: - Extensions
 
 /// ID of community and feed for sidebar selection.
@@ -483,5 +545,13 @@ extension Folder {
         FolderEntry(
             id: id, name: name, position: position, addedDate: addedDate, modifiedDate: modifiedDate, folders: [],
             albums: [])
+    }
+}
+
+extension JobsState {
+    func sorted() -> Self {
+        JobsState(feedUpdateJobs: feedUpdateJobs.sorted { $0.feedId < $1.feedId }.sorted { $0.community < $1.community },
+                  imageDownloadJob: imageDownloadJob,
+                  pandaDownloadJobs: pandaDownloadJobs.sorted { $0.id < $1.id })
     }
 }

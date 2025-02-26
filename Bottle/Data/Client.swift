@@ -151,6 +151,24 @@ struct Client {
     static func deleteFolder(folderId: Int) async throws {
         _ = try await call(.delete, path: "/folder/\(folderId)")
     }
+    
+    static func updateFeeds(communityNames: [String]) async throws {
+        await withThrowingTaskGroup(of: Void.self) { group in
+            for name in communityNames {
+                group.addTask { _ = try await call(path: "/\(name)/feeds/update") }
+            }
+        }
+    }
+    
+    static func downloadImages() async throws {
+        _ = try await call(path: "/images/download")
+        _ = try await call(path: "/panda/galleries/download")
+    }
+    
+    static func fetchJobs() async throws -> JobsState {
+        let data = try await call(path: "/jobs")
+        return try decode(data)
+    }
 
     // MARK: - Helper
 
