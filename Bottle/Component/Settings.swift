@@ -12,6 +12,9 @@ struct Settings: View {
     
     @AppStorage("serverAddress") var serverAddress: String = ""
     
+    @AppStorage("proxyHost") var proxyHost: String = ""
+    @AppStorage("proxyPort") var proxyPort: String = ""
+    
     @AppStorage("pandaMemberID") var pandaMemberID: String = ""
     @AppStorage("pandaPassHash") var pandaPassHash: String = ""
     @AppStorage("pandaIgneous") var pandaIgneous: String = ""
@@ -29,6 +32,13 @@ struct Settings: View {
                     TextField("Address", text: $serverAddress)
                         .autocorrectionDisabled()
 
+                }
+                
+                Section(header: Text("Proxy")) {
+                    TextField("Host", text: $proxyHost)
+                        .autocorrectionDisabled()
+                    TextField("Port", text: $proxyPort)
+                        .autocorrectionDisabled()
                 }
 
                 Section(header: Text("Panda")) {

@@ -97,7 +97,7 @@ extension Dictionary where Value: Collection {
 
 func makeDefaultImagePipeline() -> ImagePipeline {
     var config = ImagePipeline.Configuration.withDataCache(name: "com.frothywater.Bottle.DataCache", sizeLimit: 1024)
-//    config.isRateLimiterEnabled = false
+    // config.isRateLimiterEnabled = false
     config.isProgressiveDecodingEnabled = true
     config.dataLoadingQueue.maxConcurrentOperationCount = 16
     
@@ -105,6 +105,21 @@ func makeDefaultImagePipeline() -> ImagePipeline {
     urlConfig.urlCache = nil
     urlConfig.httpMaximumConnectionsPerHost = 16
     urlConfig.timeoutIntervalForRequest = 10
+    
+    // Set proxy
+    // https://stackoverflow.com/questions/36333784/programmatically-configure-proxy-settings-in-ios
+    if let proxyHost = UserDefaults.standard.string(forKey: "proxyHost"),
+       let proxyPort = UserDefaults.standard.string(forKey: "proxyPort"),
+       !proxyHost.isEmpty, !proxyPort.isEmpty,
+       let proxyPort = Int(proxyPort) {
+        urlConfig.connectionProxyDictionary = [
+            "HTTPSEnable": true,
+            "HTTPSProxy": proxyHost,
+            "HTTPSPort": proxyPort,
+        ]
+        print("Set proxy: \(proxyHost):\(proxyPort)")
+    }
+    
     config.dataLoader = DataLoader(configuration: urlConfig)
     
     return ImagePipeline(configuration: config)
